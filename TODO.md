@@ -4,6 +4,11 @@
 - Welcome scene: add someone waiting for His Excellency, looking impatient (tapping a foot, checking a watch).
 - Welcome scene: Groucho's slide down the pole looks wrong; redo it.
 - Sidecar: legs and bodies still don't sit right on the motorcycle and in the sidecar.
+- Sidecar bits: make them smoother overall: ease the ride in and the stop (a little
+  bounce on the springs when it stops), let the motorcycle roll away with a wobble and
+  a trail of exhaust instead of snapping off, keep both riders moving with their
+  vehicle on every frame (no jumps when the sidecar comes off), and no sudden swap
+  where the picture changes from motorcycle-with-sidecar to the two separate pieces.
 - Sidecar: Harpo sits on the handlebars, not on the seat; move him back onto the saddle.
 - Hats look sloppy (the hat shuffle at the lemonade stand, and elsewhere).
 - Lemonade stand again: Harpo isn't really in the lemonade; he should stand in the tub.
