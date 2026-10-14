@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Duck Soup screensaver
+Comment=Start the Duck Soup when the session has been idle
+Exec=duck-soup-screensaver watch
+Icon=duck-soup
+NoDisplay=true
+X-GNOME-Autostart-enabled=true

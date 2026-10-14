@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Duck Soup
+Comment=The sight gags of Duck Soup (1933) as a cartoon, in the order of the film
+Exec=duck-soup --window
+Icon=duck-soup
+Categories=Game;
+Keywords=comedy;cartoon;Marx Brothers;music;screensaver;

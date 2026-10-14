@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Duck Soup
+Comment=The sight gags of Duck Soup (1933) as a cartoon, in the order of the film
+Exec=duck-soup
+TryExec=duck-soup
+X-Screensaver-Standalone=true
+X-Screensaver-Snapshot=duck-soup --snapshot %o --size %wx%h --time 30 --mute

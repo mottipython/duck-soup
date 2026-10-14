@@ -1,0 +1,18 @@
+Package: duck-soup
+Version: @VERSION@
+Section: games
+Priority: optional
+Architecture: @ARCH@
+Depends: libc6 (>= 2.38), libsdl2-2.0-0 (>= 2.0.18), swayidle
+Installed-Size: @SIZE@
+Maintainer: Motti Schleider <motti.schleider@gmail.com>
+Description: Duck Soup, a cartoon screensaver of the Marx Brothers' sight gags
+ Duck Soup, a cartoon screensaver of the sight gags from the Marx Brothers'
+ Duck Soup (1933), in the order of the film: the new leader of Freedonia arriving
+ down a fireman's pole, the lemonade stand and its hat shuffle, the sidecar that
+ never goes anywhere, the radio that will not stop playing, the broken mirror,
+ Paul Revere's ride, and a war fought in a different uniform every time. With
+ public-domain band recordings from before 1926.
+ .
+ On Wayland desktops it starts by itself after five minutes idle.
+ duck-soup-screensaver changes the delay or turns it off.
