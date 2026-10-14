@@ -55,3 +55,19 @@ TASK 13, 13-battlefield.png (background): a comic battlefield: a ruined farmhous
 ## Afterwards
 
 When the pictures are in, `tools/make_sprites.py` will cut each sheet into frames (the magenta key, as in the Mirror Scene), and the backgrounds go in as they are. If a sheet comes back with figures touching or at different sizes, ask Gemini to "redraw task N with more space between the figures, all the same size".
+
+## The opening titles: ducks in a pot
+
+Two separate prompts. For each, upload the same two Mirror Scene pictures again, so the style matches, and save the result in `~/Pictures/duck-soup/` under the name in its heading.
+
+### 14-pot.png
+
+```
+A wide 16:9 picture in exactly the same 1930s rubber-hose cartoon style as the pictures I uploaded: thick clean black ink outlines, flat muted colours, a little halftone shading, NOT photorealistic, no text, no watermark. A big black iron cooking pot, seen from the front and a little above, sitting on a crackling wood fire, filling the middle of the picture, full almost to the brim with steaming water, so that the water's surface is a wide oval seen from above. A plain dark warm background behind it, like an old film's title card. The pot must be EMPTY: no ducks, no animals and no people in it or anywhere in the picture.
+```
+
+### 15-ducks.png
+
+```
+A character sheet in exactly the same 1930s rubber-hose cartoon style as the pictures I uploaded: thick clean black ink outlines, flat muted colours, a little halftone shading, NOT photorealistic, no text, no watermark. A flat, pure magenta (#FF00FF) background with no magenta anywhere on the ducks, 4 columns by 4 rows, every duck drawn at the SAME size with clear magenta space round each one and nothing touching or overlapping. A cheerful white cartoon duck with an orange bill, seen from the side facing RIGHT, drawn from the waterline UP only, cut off flat at the waterline (the body under the water is not drawn), as if swimming. Row 1: four frames of a smooth paddling bob, the duck rising and dipping, that loop. Row 2: quacking with its bill wide open; looking back over its shoulder; looking up, surprised; sweating, with a drop of sweat flying off. Row 3: diving head first with its tail up; just its tail sticking up; popping back up with a splash; shaking the water off its head. Row 4: four different ducks swimming calmly: a big one, a small duckling, one in a little straw hat, one in a little top hat.
+```

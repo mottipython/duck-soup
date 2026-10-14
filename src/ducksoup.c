@@ -239,7 +239,7 @@ static const struct { int first, n; double stride, fps; } CYCLES[NCYCLE] = {
     [CY_CROCKETT] = {SP_u_r1, 4, 0, 10},
 };
 typedef struct { double t, x, y; int pose, flip, how; double arc, spin, fl, sz; } Key;   /* fl, sz: a floor and size of its own, or 0 */
-typedef struct { Key k[72]; int n, layer; double floor, size, alpha; } Actor;
+typedef struct { Key k[72]; int n, layer; double floor, size, alpha, cut; } Actor;   /* cut: drawn only above this height on the picture, or 0 */
 #define MAXACT 160
 static Actor act[MAXACT];
 static int nact;
@@ -481,8 +481,14 @@ static void build_sidecar_bit(int which)
 {
     begin(S_SIDECAR, NULL, SP_garden, 0.40, M_SIDECAR);
     const double MX = 0.47, SEAT = 0.035, SIDE = -0.085, SEAT_Y = 0.3, SIDE_Y = 0.22;
-    Actor *gr = actor(1, 0.86, 1.0), *hr = actor(1, 0.86, 1.0);
-    Actor *moto = actor(2, 0.88, 1.45), *side = actor(2, 0.88, 1.45), *puff = actor(3, 0.88, 0.9);
+    /* back to front: the motorcycle (with the sidecar on it, or not), its rider astride
+     * it, the sidecar on its own (it is on our side of the motorcycle), the passenger
+     * down in the sidecar, in front of its seat but cut off at its rim, and the exhaust */
+    const double RIM = 0.685;
+    Actor *gr = actor(which == 1 ? 2 : 4, 0.86, 1.0), *hr = actor(which == 1 ? 4 : 2, 0.86, 1.0);
+    if (which == 2) hr->layer = 4;
+    (which == 1 || which == 2 ? hr : gr)->cut = RIM;
+    Actor *moto = actor(1, 0.88, 1.45), *side = actor(3, 0.88, 1.45), *puff = actor(5, 0.88, 0.7);
     at(puff, 0, MX, GONE, 0);
     if (which == 2) {                               /* the sidecar by itself, honking */
         at(moto, 0, 0, GONE, 0); at(gr, 0, 0, GONE, 0);
@@ -501,7 +507,7 @@ static void build_sidecar_bit(int which)
     go(moto, 0.2, -0.45, SP_p_motoside, 0, GLIDE); at(moto, 2.0, MX, SP_p_motoside, 0);
     key(ra, 0.2, -0.45 + SEAT, SEAT_Y, rider, 0, GLIDE); key(ra, 2.0, MX + SEAT, SEAT_Y, rider, 0, HOLD);
     key(pa, 0.2, -0.45 + SIDE, SIDE_Y, passenger, 0, GLIDE); key(pa, 2.0, MX + SIDE, SIDE_Y, passenger, 0, HOLD);
-    at(puff, 2.8, MX - 0.15, SP_p_puff, 1); at(puff, 3.3, MX - 0.15, GONE, 0); sound(2.8, FX_PUFF);
+    at(puff, 2.8, MX - 0.27, SP_p_puff, 1); at(puff, 3.3, MX - 0.27, GONE, 0); sound(2.8, FX_PUFF);
     at(moto, 3.2, MX, SP_p_moto, 0); at(side, 3.2, MX + SIDE - 0.01, SP_p_sidecar, 0);
     if (which == 0) {                               /* off goes the motorcycle */
         go(moto, 3.4, MX, SP_p_moto, 0, FALL); at(moto, 4.6, 1.4, GONE, 0);
@@ -1045,15 +1051,22 @@ static void backdrop(int which, double push)
     SDL_RenderCopyF(ren, cur_tex[which], NULL, &d);
 }
 /* one frame of a figure, feet at (x, y), drawn `tall` high for a 480-high figure */
+static double cut_y;                  /* figures are drawn only above this, when it is set */
 static void figure(int which, double x, double y, double tall, int flip, double alpha, double sx, double sy, double spin)
 {
     flush(ren);
     if (which < 0 || which >= NSPRITE || alpha <= 0.01 || !cur_tex || !cur_tex[which]) return;
     double k = tall / 480.0, w = sprite[which].w * k * sx, hgt = sprite[which].h * k * sy;
     SDL_FRect dst = {(float)(x - w / 2), (float)(y - hgt + 10 * k * sy), (float)w, (float)hgt};
+    SDL_Rect src = {0, 0, sprite[which].w, sprite[which].h};
+    if (cut_y > 0 && dst.y + dst.h > cut_y) {        /* down in a sidecar: only the top of him */
+        double keep = (cut_y - dst.y) / dst.h;
+        if (keep <= 0) return;
+        src.h = (int)(sprite[which].h * keep); dst.h = (float)(dst.h * keep);
+    }
     SDL_FPoint mid = {(float)(w / 2), (float)(hgt / 2)};
     SDL_SetTextureAlphaMod(cur_tex[which], (Uint8)(fmin(alpha, 1) * 255));
-    SDL_RenderCopyExF(ren, cur_tex[which], NULL, &dst, spin, &mid, flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
+    SDL_RenderCopyExF(ren, cur_tex[which], &src, &dst, spin, &mid, flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
     SDL_SetTextureAlphaMod(cur_tex[which], 255);
 }
 static void shadow(double x, double y, double r, double a)
@@ -1075,8 +1088,10 @@ static void draw_actor(const Actor *a, double t, double tall)
     double breathe = is_prop(l.pose) ? 0 : 0.006 * sin(anim_t * 2.6 + (a - act) * 1.7);
     double sy = 1 - 0.07 * l.pop + breathe, sx = 1 + 0.05 * l.pop;
     if (!is_prop(l.pose) || l.pose == SP_p_tub || l.pose == SP_p_moto || l.pose == SP_p_motoside || l.pose == SP_p_sidecar)
-        shadow(x, feet, size * 0.22, 1 - fmin(l.y, 1));
+        if (!a->cut) shadow(x, feet, size * 0.22, 1 - fmin(l.y, 1));
+    cut_y = a->cut > 0 ? ry0 + rh * a->cut : 0;
     figure(l.pose, x, feet - l.y * size, size, l.flip, a->alpha, sx, sy, l.spin);
+    cut_y = 0;
 }
 static void draw_bubbles(int s, double t, double tall, int path)
 {
