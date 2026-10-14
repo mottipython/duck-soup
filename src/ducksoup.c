@@ -228,7 +228,7 @@ static double ease(double x) { return x * x * (3 - 2 * x); }
  * height) and a size; a scene sets how tall a 480-high figure is on its picture. */
 enum { HOLD, GLIDE, SLIDE, FALL, STRIDE, RUN };
 #define GONE (-1)
-enum { CY_FIREFLY, CY_FIREFLY_T, CY_CHICO, CY_HARPO, CY_REVERE, CY_CROCKETT, NCYCLE };
+enum { CY_FIREFLY, CY_FIREFLY_T, CY_CHICO, CY_HARPO, CY_REVERE, CY_CROCKETT, CY_DUCK, NCYCLE };
 #define CYCLE(c) (NSPRITE + (c))
 static const struct { int first, n; double stride, fps; } CYCLES[NCYCLE] = {
     [CY_FIREFLY] = {SP_f_w1, 4, 0.035, 0},
@@ -237,9 +237,19 @@ static const struct { int first, n; double stride, fps; } CYCLES[NCYCLE] = {
     [CY_HARPO] = {SP_h_w1, 4, 0.030, 0},
     [CY_REVERE] = {SP_r_g1, 8, 0, 15},
     [CY_CROCKETT] = {SP_u_r1, 4, 0, 10},
+    [CY_DUCK] = {SP_d_b1, 4, 0, 5},
 };
 typedef struct { double t, x, y; int pose, flip, how; double arc, spin, fl, sz; } Key;   /* fl, sz: a floor and size of its own, or 0 */
-typedef struct { Key k[72]; int n, layer; double floor, size, alpha, cut; } Actor;   /* cut: drawn only above this height on the picture, or 0 */
+typedef struct Actor Actor;
+struct Actor {
+    Key k[72];
+    int n, layer;
+    double floor, size, alpha, cut;   /* cut: drawn only above this height on the picture, or 0 */
+    Actor *ride0, *ride1;             /* what it rides in or on (the second from ride_at on), or none */
+    double ride_at;
+    int seat;                         /* RIDER astride it, or PASSENGER down in it */
+};
+enum { RIDER = 1, PASSENGER };
 #define MAXACT 160
 static Actor act[MAXACT];
 static int nact;
@@ -305,7 +315,7 @@ static Look look(const Actor *a, double t)
  * A horn, glass breaking, a puff, a splat and a match, made here rather than
  * recorded; and the words that pop up with them. Each is put on the show's time-line
  * when the show is made, and mixed into its sound track then. */
-enum { FX_HONK, FX_CRASH, FX_PUFF, FX_SPLAT, FX_MATCH, FX_BOOM, FX_SNIP };
+enum { FX_HONK, FX_CRASH, FX_PUFF, FX_SPLAT, FX_MATCH, FX_BOOM, FX_SNIP, FX_QUACK, FX_QUACKS, FX_POND };
 typedef struct { double t; int kind; } Fx;
 static Fx fx[96];
 static int nfx;
@@ -319,9 +329,9 @@ static void say(double t, double dur, double x, double y, const char *s, Rgb c)
 }
 
 /* ---- the scenes ---- */
-enum { S_ARRIVAL, S_LEMONADE, S_SIDECAR, S_LEMONADE2, S_RADIO, S_MIRROR, S_RIDE, S_WAR, S_FINALE };
+enum { S_OPENER, S_ARRIVAL, S_LEMONADE, S_SIDECAR, S_LEMONADE2, S_RADIO, S_MIRROR, S_RIDE, S_WAR, S_FINALE };
 #define MAXSCENE 24
-enum { M_ARRIVAL, M_SIDECAR, M_RADIO, M_RIDE, M_WAR, M_FINALE, NMUSIC, M_NONE = -1 };
+enum { M_OPENER, M_ARRIVAL, M_SIDECAR, M_RADIO, M_RIDE, M_WAR, M_FINALE, NMUSIC, M_NONE = -1 };
 typedef struct {
     int kind;                  /* which scene it is */
     const char *card;          /* its title card, or none */
@@ -352,6 +362,65 @@ static void begin(int kind, const char *card, int bg, double tall, int music)
     cur->first = nact; cur->fx0 = nfx; cur->b0 = nbubble;
 }
 static void end(double len) { cur->len = len; cur->n = nact - cur->first; cur->fx1 = nfx; cur->b1 = nbubble; }
+
+/* ---- 0. The opening titles ----
+ * As the picture's own titles: ducks paddling in a pot on the fire. The curtain goes
+ * up on them, the title comes down on its ropes, and the ducks get on with it: a
+ * quack, a dive, a drip of sweat as the water warms. Then the curtain comes down. */
+#define OPENER_LEN 22.0
+static void duck_swim(Actor *d, double t0, double t1, double x0, double x1)
+{
+    go(d, t0, x0, CYCLE(CY_DUCK), x1 < x0, GLIDE);
+    go(d, t1, x1, CYCLE(CY_DUCK), x1 < x0, HOLD);
+}
+static void build_opener(void)
+{
+    begin(S_OPENER, NULL, SP_pot, 0.26, M_OPENER);
+    /* the water is an oval across the pot: ducks at the back paddle along 0.255,
+     * those in front along 0.31, a little bigger */
+    Actor *a = actor(2, 0.31, 1.0), *b = actor(2, 0.315, 0.95), *big = actor(1, 0.252, 0.8),
+          *little = actor(1, 0.252, 0.8), *top = actor(1, 0.247, 0.78), *boat = actor(2, 0.30, 0.95);
+    /* A, in front, the quacker */
+    duck_swim(a, 0, 3.2, 0.44, 0.52);
+    at(a, 3.4, 0.52, SP_d_up, 0);                   /* the title comes down */
+    duck_swim(a, 4.6, 6.8, 0.52, 0.58);
+    at(a, 7.0, 0.58, SP_d_quack, 0); sound(7.05, FX_QUACKS);
+    duck_swim(a, 8.4, 11.5, 0.58, 0.47);
+    at(a, 12.0, 0.47, SP_d_sweat, 1);
+    duck_swim(a, 13.6, 16.2, 0.47, 0.55);
+    at(a, 16.4, 0.55, SP_d_quack, 0); sound(16.45, FX_QUACK);
+    duck_swim(a, 17.2, OPENER_LEN, 0.55, 0.6);
+    /* B, in front, the diver */
+    duck_swim(b, 0, 3.2, 0.40, 0.38);
+    at(b, 3.4, 0.38, SP_d_up, 1);
+    duck_swim(b, 4.6, 8.6, 0.38, 0.40);
+    at(b, 9.0, 0.40, SP_d_dive, 0); sound(9.0, FX_SPLAT);
+    at(b, 9.4, 0.40, SP_d_tail, 0);
+    at(b, 11.2, 0.40, SP_d_pop, 0); sound(11.2, FX_SPLAT);
+    at(b, 11.9, 0.40, SP_d_shake, 0);
+    at(b, 12.8, 0.40, SP_d_back, 0);
+    duck_swim(b, 14.0, OPENER_LEN, 0.40, 0.37);
+    /* at the back, the big one and her duckling behind her */
+    for (int i = 0; i < 2; i++) {
+        Actor *d = i ? little : big;
+        int pose = i ? SP_d_little : SP_d_big;
+        double lag = i * 0.5, off = i ? -0.075 : 0;
+        go(d, 0, 0.42 + off, pose, 0, GLIDE); go(d, 6.0 + lag, 0.6 + off * -1 + (i ? 0 : 0), pose, 1, GLIDE);
+        go(d, 6.6 + lag, 0.6 - off, pose, 1, GLIDE); go(d, 14.0 + lag, 0.42 - off, pose, 0, GLIDE);
+        go(d, 14.6 + lag, 0.42 + off, pose, 0, GLIDE); go(d, OPENER_LEN, 0.55 + off, pose, 0, HOLD);
+    }
+    sound(5.6, FX_QUACK); sound(14.8, FX_QUACK);
+    /* and the two in hats, gliding past each other with dignity */
+    go(top, 0, 0.62, SP_d_tophat, 1, GLIDE); go(top, 10.0, 0.40, SP_d_tophat, 1, GLIDE);
+    go(top, 10.8, 0.40, SP_d_tophat, 0, GLIDE); go(top, OPENER_LEN, 0.56, SP_d_tophat, 0, HOLD);
+    go(boat, 0, 0.60, SP_d_boater, 1, GLIDE); go(boat, 7.5, 0.62, SP_d_boater, 1, GLIDE);
+    go(boat, 8.0, 0.62, SP_d_boater, 1, GLIDE); go(boat, 15.5, 0.52, SP_d_boater, 1, GLIDE);
+    go(boat, 16.0, 0.52, SP_d_boater, 0, GLIDE); go(boat, OPENER_LEN, 0.6, SP_d_boater, 0, HOLD);
+    sound(10.2, FX_QUACK); sound(19.0, FX_QUACK); sound(20.3, FX_QUACK);
+    sound(1.0, FX_POND);
+    cur->music_stop = OPENER_LEN;
+    end(OPENER_LEN);
+}
 
 /* ---- 1. His Excellency arrives ----
  * The guards blow their trumpets and the ballerinas raise their swords, and
@@ -480,49 +549,47 @@ static void build_lemonade(void)
 static void build_sidecar_bit(int which)
 {
     begin(S_SIDECAR, NULL, SP_garden, 0.40, M_SIDECAR);
-    const double MX = 0.47, SEAT = 0.035, SIDE = -0.085, SEAT_Y = 0.3, SIDE_Y = 0.22;
+    const double MX = 0.47;
     /* back to front: the motorcycle (with the sidecar on it, or not), its rider astride
      * it, the sidecar on its own (it is on our side of the motorcycle), the passenger
-     * down in the sidecar, in front of its seat but cut off at its rim, and the exhaust */
-    const double RIM = 0.685;
+     * down in the sidecar, and the exhaust. The two of them ride: they go where the
+     * motorcycle and the sidecar go, and sit in their seats. */
+    Actor *moto = actor(1, 0.88, 1.45), *side = actor(3, 0.88, 1.45);
     Actor *gr = actor(which == 1 ? 2 : 4, 0.86, 1.0), *hr = actor(which == 1 ? 4 : 2, 0.86, 1.0);
-    if (which == 2) hr->layer = 4;
-    (which == 1 || which == 2 ? hr : gr)->cut = RIM;
-    Actor *moto = actor(1, 0.88, 1.45), *side = actor(3, 0.88, 1.45), *puff = actor(5, 0.88, 0.7);
+    Actor *puff = actor(5, 0.88, 0.7);
     at(puff, 0, MX, GONE, 0);
     if (which == 2) {                               /* the sidecar by itself, honking */
         at(moto, 0, 0, GONE, 0); at(gr, 0, 0, GONE, 0);
         go(side, 0.4, 1.35, SP_p_sidecar, 1, SLIDE); at(side, 3.6, -0.4, GONE, 0);
-        key(hr, 0.4, 1.35 - SIDE, SIDE_Y, SP_h_bye, 1, SLIDE); key(hr, 3.6, -0.4 - SIDE, SIDE_Y, GONE, 0, HOLD);
+        hr->ride0 = side; hr->seat = PASSENGER; hr->layer = 4;
+        at(hr, 0, 0, SP_h_ride, 1);
         sound(1.9, FX_HONK); say(1.9, 1.0, 0.5, 1.2, "HONK!", RED);
         cur->music_stop = 4.6;
         end(4.6);
         cur->iris_x = 0.2; cur->iris_y = 0.66;
         return;
     }
-    /* in they ride, the rider on the motorcycle and the passenger in the sidecar */
-    int rider = which ? SP_f_sit : SP_h_ride, passenger = which ? SP_h_ride : SP_f_sit;
     Actor *ra = which ? gr : hr, *pa = which ? hr : gr;
+    ra->ride0 = moto; ra->seat = RIDER;
+    pa->ride0 = moto; pa->ride1 = side; pa->ride_at = 3.2; pa->seat = PASSENGER;
+    at(ra, 0, 0, which ? SP_f_sit : SP_h_ride, 0);
+    at(pa, 0, 0, which ? SP_h_ride : SP_f_sit, 0);
     at(side, 0, MX, GONE, 0);
     go(moto, 0.2, -0.45, SP_p_motoside, 0, GLIDE); at(moto, 2.0, MX, SP_p_motoside, 0);
-    key(ra, 0.2, -0.45 + SEAT, SEAT_Y, rider, 0, GLIDE); key(ra, 2.0, MX + SEAT, SEAT_Y, rider, 0, HOLD);
-    key(pa, 0.2, -0.45 + SIDE, SIDE_Y, passenger, 0, GLIDE); key(pa, 2.0, MX + SIDE, SIDE_Y, passenger, 0, HOLD);
     at(puff, 2.8, MX - 0.27, SP_p_puff, 1); at(puff, 3.3, MX - 0.27, GONE, 0); sound(2.8, FX_PUFF);
-    at(moto, 3.2, MX, SP_p_moto, 0); at(side, 3.2, MX + SIDE - 0.01, SP_p_sidecar, 0);
+    at(moto, 3.2, MX, SP_p_moto, 0); at(side, 3.2, MX - 0.035, SP_p_sidecar, 0);
     if (which == 0) {                               /* off goes the motorcycle */
         go(moto, 3.4, MX, SP_p_moto, 0, FALL); at(moto, 4.6, 1.4, GONE, 0);
-        key(hr, 3.4, MX + SEAT, SEAT_Y, SP_h_ride, 0, FALL); key(hr, 4.6, 1.4 + SEAT, SEAT_Y, GONE, 0, HOLD);
-        key(gr, 4.8, MX + SIDE, SIDE_Y, SP_f_situp, 0, HOLD);
-        key(gr, 6.3, MX + SIDE, SIDE_Y, SP_f_brows, 0, HOLD);
+        at(gr, 4.8, 0, SP_f_situp, 0);
+        at(gr, 6.4, 0, SP_f_sit, 0);
     } else {                                        /* off goes the sidecar */
-        go(side, 3.4, MX + SIDE - 0.01, SP_p_sidecar, 0, FALL); at(side, 4.6, 1.4, GONE, 0);
-        key(hr, 3.4, MX + SIDE, SIDE_Y, SP_h_ride, 0, FALL); key(hr, 4.6, 1.4 + SIDE, SIDE_Y, GONE, 0, HOLD);
-        key(gr, 4.8, MX + SEAT, SEAT_Y, SP_f_situp, 0, HOLD);
-        key(gr, 6.3, MX + SEAT, SEAT_Y, SP_f_fist, 0, HOLD);
+        go(side, 3.4, MX - 0.035, SP_p_sidecar, 0, FALL); at(side, 4.6, 1.4, GONE, 0);
+        at(gr, 4.8, 0, SP_f_situp, 0);
+        at(gr, 6.4, 0, SP_f_sit, 0);
     }
     cur->music_stop = 8.2;
     end(8.2);
-    cur->iris_x = which ? MX + SEAT : MX + SIDE; cur->iris_y = 0.6;
+    cur->iris_x = which ? MX : MX - 0.08; cur->iris_y = 0.6;
 }
 
 /* ---- 4. The lemonade stand again ----
@@ -847,6 +914,7 @@ static void build_finale(void)
 static void build_show(void)
 {
     nact = nfx = nbubble = NSCENE = 0;
+    build_opener();
     void (*const order[])(void) = {build_arrival, build_lemonade, build_lemonade2, build_radio,
                                    build_mirror, build_ride, build_war, build_finale};
     int n = sizeof order / sizeof *order;
@@ -854,7 +922,6 @@ static void build_show(void)
         order[i]();
         if (i + 1 < n) build_sidecar_bit(i % 3);
     }
-    scene[0].card_len = 2 * CARD;                  /* the picture's own title first */
     double t = 0;
     for (int s = 0; s < NSCENE; s++) {
         scene_at[s] = t;
@@ -895,12 +962,26 @@ static int scene_of(double t, double *local)
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
-ART(m_arrival, "m_arrival.ogg") ART(m_sidecar, "m_sidecar.ogg") ART(m_radio, "m_radio.ogg")
+ART(m_opener, "m_opener.ogg") ART(m_arrival, "m_arrival.ogg") ART(m_sidecar, "m_sidecar.ogg") ART(m_radio, "m_radio.ogg")
 ART(m_ride, "m_ride.ogg") ART(m_war, "m_war.ogg") ART(m_finale, "m_finale.ogg")
 static const unsigned char *MUSIC_FILE[NMUSIC][2] = {
-    {art_m_arrival, art_m_arrival_end}, {art_m_sidecar, art_m_sidecar_end}, {art_m_radio, art_m_radio_end},
+    {art_m_opener, art_m_opener_end}, {art_m_arrival, art_m_arrival_end}, {art_m_sidecar, art_m_sidecar_end}, {art_m_radio, art_m_radio_end},
     {art_m_ride, art_m_ride_end}, {art_m_war, art_m_war_end}, {art_m_finale, art_m_finale_end},
 };
+/* the recorded noises (tools/make_sounds.py): a pond of ducks, a run of quacks,
+ * single quacks, and a rubber bulb horn */
+ART(s_pond, "s_pond.ogg") ART(s_quacks, "s_quacks.ogg") ART(s_quack1, "s_quack1.ogg") ART(s_quack2, "s_quack2.ogg")
+ART(s_quack3, "s_quack3.ogg") ART(s_quack4, "s_quack4.ogg") ART(s_quack5, "s_quack5.ogg")
+ART(s_honk1, "s_honk1.ogg") ART(s_honk2, "s_honk2.ogg") ART(s_honk3, "s_honk3.ogg")
+enum { SM_POND, SM_QUACKS, SM_QUACK1, SM_QUACK5 = SM_QUACK1 + 4, SM_HONK1, SM_HONK3 = SM_HONK1 + 2, NSAMPLE };
+static const unsigned char *SAMPLE_FILE[NSAMPLE][2] = {
+    {art_s_pond, art_s_pond_end}, {art_s_quacks, art_s_quacks_end},
+    {art_s_quack1, art_s_quack1_end}, {art_s_quack2, art_s_quack2_end}, {art_s_quack3, art_s_quack3_end},
+    {art_s_quack4, art_s_quack4_end}, {art_s_quack5, art_s_quack5_end},
+    {art_s_honk1, art_s_honk1_end}, {art_s_honk2, art_s_honk2_end}, {art_s_honk3, art_s_honk3_end},
+};
+static short *sample[NSAMPLE];
+static int sample_len[NSAMPLE];
 #define RATE 22050
 static short *music[NMUSIC];
 static int music_len[NMUSIC];
@@ -921,21 +1002,39 @@ static void load_music(void)
         music_len[m] = n;
         free(pcm);
     }
+    for (int m = 0; m < NSAMPLE; m++) {
+        int ch, rate;
+        short *pcm;
+        int n = stb_vorbis_decode_memory(SAMPLE_FILE[m][0], (int)(SAMPLE_FILE[m][1] - SAMPLE_FILE[m][0]), &ch, &rate, &pcm);
+        if (n <= 0) continue;
+        sample[m] = malloc(sizeof *sample[m] * n);
+        for (int i = 0; i < n; i++) sample[m][i] = pcm[i * ch];
+        sample_len[m] = n;
+        free(pcm);
+    }
+}
+static void add_sample(float *buf, int len, int at, int m, double gain)
+{
+    if (!sample[m]) return;
+    for (int i = 0; i < sample_len[m] && at + i < len; i++) if (at + i >= 0) buf[at + i] += (float)(sample[m][i] / 32768.0 * gain);
 }
 /* the noises, added into a float buffer at sample i */
 static double noise(void) { return frand() * 2 - 1; }
 static void mix_fx(float *buf, int len, int at, int kind)
 {
-    double lp = 0, ph1 = 0, ph2 = 0;
+    double lp = 0;
     switch (kind) {
-    case FX_HONK:                                  /* a rubber bulb horn: two reedy tones, sagging */
-        for (int i = 0; i < RATE * 0.42 && at + i < len; i++) {
-            double t = (double)i / RATE, env = fmin(1, t / 0.015) * exp(-t * 3.2) * (t < 0.36 ? 1 : 1 - (t - 0.36) / 0.06);
-            double f = 392 * (1 - 0.07 * t / 0.4);
-            ph1 += 2 * M_PI * f / RATE; ph2 += 2 * M_PI * f * 1.26 / RATE;
-            double v = tanh(3.0 * sin(ph1)) + 0.7 * tanh(3.0 * sin(ph2)) + 0.25 * sin(ph1 * 3);
-            buf[at + i] += (float)(0.32 * env * v);
-        }
+    case FX_HONK:                                  /* the bulb horn: one honk, now and then two */
+        add_sample(buf, len, at, frand() < 0.25 ? SM_HONK3 : SM_HONK1 + (int)(frand() * 2), 0.9);
+        break;
+    case FX_QUACK:
+        add_sample(buf, len, at, SM_QUACK1 + (int)(frand() * 5) % 5, 0.75);
+        break;
+    case FX_QUACKS:
+        add_sample(buf, len, at, SM_QUACKS, 0.75);
+        break;
+    case FX_POND:
+        add_sample(buf, len, at, SM_POND, 0.35);
         break;
     case FX_CRASH:                                 /* glass: a burst, and then the pieces tinkling down */
         for (int i = 0; i < RATE * 1.6 && at + i < len; i++) {
@@ -1080,8 +1179,46 @@ static void shadow(double x, double y, double r, double a)
 }
 static int is_prop(int pose) { return pose >= SP_p_boater && pose <= SP_p_tyrol; }
 /* an actor of the current scene, at scene time t */
+/* Where a seat is in a vehicle's picture (across and down, facing right), and where
+ * a rider's hips are in his: so that he sits in it, not by it */
+static int seat_at(int vehicle, int seat, double *fx, double *fy, double *rim)
+{
+    *rim = 0;
+    if (vehicle == SP_p_motoside) {
+        if (seat == RIDER) { *fx = 0.47; *fy = 0.36; } else { *fx = 0.27; *fy = 0.60; *rim = 0.47; }
+    } else if (vehicle == SP_p_moto && seat == RIDER) { *fx = 0.42; *fy = 0.36; }
+    else if (vehicle == SP_p_sidecar && seat == PASSENGER) { *fx = 0.30; *fy = 0.60; *rim = 0.47; }
+    else return 0;
+    return 1;
+}
+static void hips(int pose, double *hx, double *hy)
+{
+    if (pose == SP_f_sit) { *hx = 0.36; *hy = 0.80; }
+    else if (pose == SP_f_situp) { *hx = 0.40; *hy = 0.80; }
+    else if (pose == SP_h_ride) { *hx = 0.30; *hy = 0.70; }
+    else { *hx = 0.5; *hy = 0.55; }
+}
+static void draw_rider(const Actor *a, double t, double tall)
+{
+    const Actor *v = a->ride1 && t >= a->ride_at ? a->ride1 : a->ride0;
+    Look vl = look(v, t), l = look(a, t);
+    if (vl.pose < 0 || l.pose < 0) return;
+    double fx, fy, rim, hx, hy;
+    if (!seat_at(vl.pose, a->seat, &fx, &fy, &rim)) return;
+    if (vl.flip) fx = 1 - fx;
+    double vsize = tall * vl.sz, k = vsize / 480, vw = sprite[vl.pose].w * k, vh = sprite[vl.pose].h * k;
+    double vx = rx0 + rw * vl.x, top = ry0 + rh * vl.fl - vl.y * vsize + 10 * k - vh;
+    double sx = vx - vw / 2 + fx * vw, sy = top + fy * vh;
+    hips(l.pose, &hx, &hy);
+    if (l.flip) hx = 1 - hx;
+    double rs = tall * l.sz, rk = rs / 480, pw = sprite[l.pose].w * rk, ph = sprite[l.pose].h * rk;
+    cut_y = rim > 0 ? top + rim * vh : 0;
+    figure(l.pose, sx - hx * pw + pw / 2, sy - hy * ph + ph - 10 * rk, rs, l.flip, a->alpha, 1, 1, 0);
+    cut_y = 0;
+}
 static void draw_actor(const Actor *a, double t, double tall)
 {
+    if (a->ride0) { draw_rider(a, t, tall); return; }
     Look l = look(a, t);
     if (l.pose < 0) return;
     double x = rx0 + rw * l.x, feet = ry0 + rh * l.fl, size = tall * l.sz;
@@ -1136,7 +1273,7 @@ static void person(MPose p)
     figure(p.pose, x, feet, tall, p.flip, 1, 1, 1, 0);
 }
 /* the opening of the mirror, in the room picture: its four corners */
-static const double OPENING[4][2] = {{0.52, 0.2575}, {0.70, 0.1906}, {0.70, 0.8167}, {0.52, 0.7136}};
+static const double OPENING[4][2] = {{0.52, 0.2649}, {0.70, 0.2247}, {0.70, 0.7642}, {0.52, 0.7022}};
 static void mirror_glass(double a)
 {
     double p[4][2];
@@ -1300,6 +1437,69 @@ static void old_film(void)
     flush(ren);
 }
 
+/* ---- the curtain and the title ---- */
+static const Rgb VELVET = {150, 22, 30}, VELVET_DARK = {70, 8, 14};
+static void quadc(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3,
+                  SDL_Color c0, SDL_Color c1, SDL_Color c2, SDL_Color c3)
+{
+    vb_need(4, 6);
+    int b = nv;
+    vert(x0, y0, c0); vert(x1, y1, c1); vert(x2, y2, c2); vert(x3, y3, c3);
+    ib[ni++] = b; ib[ni++] = b + 1; ib[ni++] = b + 2; ib[ni++] = b; ib[ni++] = b + 2; ib[ni++] = b + 3;
+}
+/* One half of a stage curtain, hanging from the top, `width` wide from its outer
+ * edge; as it is drawn back its folds bunch up. */
+static void curtain_half(int left, double width)
+{
+    int folds = 9;
+    double fw = width / folds, sway = sin(anim_t * 1.3 + left) * unit * 0.3;
+    for (int i = 0; i < folds; i++) {
+        double xa = left ? i * fw : sw - (i + 1) * fw, xb = xa + fw, xm = (xa + xb) / 2;
+        double bx = (left ? 1 : -1) * sway * i / folds;
+        SDL_Color dark = col(VELVET_DARK, 1), lit = col(VELVET, 1);
+        quadc(xa, 0, xm, 0, xm + bx, sh, xa + bx, sh, dark, lit, lit, dark);
+        quadc(xm, 0, xb, 0, xb + bx, sh, xm + bx, sh, lit, dark, dark, lit);
+    }
+    /* the gold fringe along its foot */
+    double x0 = left ? 0 : sw - width;
+    rect(x0, sh - unit * 1.6, width, unit * 1.6, col(GOLD, 1));
+    for (double x = x0; x < x0 + width; x += unit * 0.7) line(x, sh - unit * 1.6, x, sh - unit * 0.2, unit * 0.18, col((Rgb){150, 110, 40}, 1));
+    flush(ren);
+}
+static void curtain(double open)          /* 0 closed, 1 drawn right back */
+{
+    double half = sw / 2.0 * (1 - 0.86 * ease(open)) + unit;
+    curtain_half(1, half);
+    curtain_half(0, half);
+    /* the pelmet across the top, with its scallops and tassels */
+    double ph = sh * 0.11;
+    rect(0, 0, sw, ph, col(VELVET_DARK, 1));
+    for (double x = 0; x < sw + unit * 6; x += unit * 6) disc(x + unit * 3, ph, unit * 3.1, col(VELVET_DARK, 1), col(VELVET_DARK, 1));
+    rect(0, ph - unit * 0.6, sw, unit * 0.6, col(GOLD, 1));
+    for (double x = 0; x < sw + unit * 6; x += unit * 6) disc(x + unit * 3, ph + unit * 3.4, unit * 0.55, col(GOLD, 1), col(GOLD, 1));
+    flush(ren);
+}
+/* the title on a card, let down on two ropes; `drop` 0 is up out of sight, 1 is down */
+static void placard(double drop, double bounce)
+{
+    double w = sw * 0.46, h = sh * 0.3, cx = sw / 2.0;
+    double y = -h - unit * 4 + (sh * 0.6 + h + unit * 4) * drop + bounce;   /* it hangs in front of the fire, below the ducks */
+    SDL_Color rope = col((Rgb){120, 90, 50}, 1), gold = col(GOLD, 1), ink = col(INK, 1);
+    line(cx - w * 0.3, 0, cx - w * 0.3, y, unit * 0.35, rope);
+    line(cx + w * 0.3, 0, cx + w * 0.3, y, unit * 0.35, rope);
+    rect(cx - w / 2 + unit * 0.6, y + unit * 0.8, w, h, col(INK, 0.5));          /* its shadow */
+    rect(cx - w / 2, y, w, h, col(PAPER, 1));
+    border(cx - w / 2 + unit, y + unit, cx + w / 2 - unit, y + h - unit, unit * 0.5, gold);
+    border(cx - w / 2 + unit * 2, y + unit * 2, cx + w / 2 - unit * 2, y + h - unit * 2, unit * 0.18, ink);
+    for (int i = 0; i < 4; i++) disc(i & 1 ? cx + w / 2 - unit * 2 : cx - w / 2 + unit * 2, i & 2 ? y + h - unit * 2 : y + unit * 2, unit * 0.8, gold, gold);
+    disc(cx - w * 0.3, y + unit * 0.6, unit * 0.6, gold, gold); disc(cx + w * 0.3, y + unit * 0.6, unit * 0.6, gold, gold);
+    double s = h / 34;
+    text("THE FOUR MARX BROTHERS", cx, y + h * 0.17, s * 0.62, 0.9, ink);
+    text("IN", cx, y + h * 0.34, s * 0.62, 0.9, ink);
+    text("DUCK SOUP", cx, y + h * 0.53, s * 1.6, 1.15, col(RED, 1));
+    flush(ren);
+}
+
 /* ---- one scene ---- */
 static int draw_order[MAXACT];
 static void draw_stage(int s, double t)
@@ -1326,6 +1526,13 @@ static void draw_stage(int s, double t)
     flush(ren);
     if (sc->kind == S_RIDE) rect(0, 0, sw, sh, (SDL_Color){10, 16, 50, 40});
     draw_bubbles(s, t, tall, 0);
+    if (sc->kind == S_OPENER) {
+        /* the title drops in with a bounce on its ropes, and goes up again before the curtain comes down */
+        double down = ease(ramp(t, 3.0, 3.7)) * (1 - ease(ramp(t, sc->len - 4.6, sc->len - 3.8)));
+        double since = t - 3.7, bounce = since > 0 && t < sc->len - 4.6 ? -sh * 0.04 * exp(-since * 3.5) * sin(since * 14) : 0;
+        if (down > 0) placard(down, bounce);
+        curtain(ramp(t, 0.6, 2.8) * (1 - ramp(t, sc->len - 2.6, sc->len - 0.4)));
+    }
 }
 
 static void draw_scene(SDL_Renderer *r, int w, int h)
@@ -1343,13 +1550,13 @@ static void draw_scene(SDL_Renderer *r, int w, int h)
     double t;
     int s = scene_of(T, &t);
     if (t < 0) {                                    /* the title card */
-        double c0 = t < -CARD ? -2 * CARD : -CARD, c1 = t < -CARD ? -CARD : 0;
-        double a = ease(ramp(t, c0, c0 + 0.4)) * (1 - ease(ramp(t, c1 - 0.45, c1)));
-        title_card(t < -CARD ? "DUCK SOUP" : scene[s].card, a);
+        double a = ease(ramp(t, -CARD, -CARD + 0.4)) * (1 - ease(ramp(t, -0.45, 0)));
+        title_card(scene[s].card, a);
         old_film();
         return;
     }
     draw_stage(s, t);
+    if (scene[s].kind == S_OPENER) { old_film(); return; }        /* the curtain does the iris's work */
     /* the iris opens on the scene and closes on its last moment */
     double open = ease(ramp(t, 0, 0.9)), shut = ease(ramp(t, scene[s].len - 1.1, scene[s].len));
     double full = hypot(w, h);
@@ -1459,7 +1666,7 @@ static int write_wav(void)
     fwrite(track, 2, track_len, f);
     fclose(f);
     printf("%s: %.1f s\n", opt_wav, (double)track_len / RATE);
-    for (int s = 0; s < NSCENE; s++) printf("  %5.1f  %s (%.1f s)\n", scene_at[s] + scene[s].card_len, scene[s].card ? scene[s].card : "(the sidecar)", scene[s].len);
+    for (int s = 0; s < NSCENE; s++) printf("  %5.1f  %s (%.1f s)\n", scene_at[s] + scene[s].card_len, scene[s].card ? scene[s].card : scene[s].kind == S_OPENER ? "(the opening titles)" : "(the sidecar)", scene[s].len);
     return 0;
 }
 

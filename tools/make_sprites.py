@@ -41,12 +41,19 @@ SHEETS = {
                    "r_stop", "r_look", "r_kiss", "r_off", "hs_stand", "hs_eat", "hs_bored", "hs_trot"], 12, 470),
     "12-uniforms": (["u_union", "u_confed", "u_redcoat", "u_scout", "u_crockett", "u_napoleon", "u_ww1", "u_general",
                      "u_r1", "u_r2", "u_r3", "u_r4", "u_binoc", "u_duck", "u_salute", "u_grin"], 0, 480),
+    "15-ducks": (["d_b1", "d_b2", "d_b3", "d_b4", "d_quack", "d_back", "d_up", "d_sweat",
+                  "d_dive", "d_tail", "d_pop", "d_shake", "d_big", "d_little", "d_boater", "d_tophat"], 0, 300),
 }
 # frames with a loose motion mark (a waving hand) in the top left corner, to take off
 LOOSE_TOP_LEFT = {"gd_arch", "h_snip", "r_stop"}
 # and where one touches the drawing, the corner to clear (fractions of width, height)
 CLEAR = {"gd_arch": (0.27, 0.2)}
-BACKGROUNDS = ["01-reception-hall", "04-street", "09-garden", "11-street-night", "13-battlefield"]
+# bits Gemini drew twice, to take out of a frame (left, top, right, bottom, as parts
+# of the written frame): Groucho flicking his ash has a cigar in his mouth as well
+ERASE = {"f_ash": [(0.64, 0.215, 0.75, 0.30)]}
+# and where the rest of it shows on his face, painted over in the colour of his chin
+SKIN = {"f_ash": ((0.56, 0.235, 0.64, 0.295), (0.55, 0.315))}
+BACKGROUNDS = ["14-pot", "01-reception-hall", "04-street", "09-garden", "11-street-night", "13-battlefield"]
 
 def load(path):
     w, h = map(int, subprocess.check_output(["magick", "identify", "-format", "%w %h", path]).split())
@@ -168,6 +175,21 @@ def main(mirror):
                 d[i][:int(d[i].shape[0] * CLEAR[n][1]), :int(d[i].shape[1] * CLEAR[n][0]), 3] = 0
         d = [drop_top_left(p) if n in LOOSE_TOP_LEFT else p for n, p in zip(names, d)]
         sizes = [frame(p, k, f"{OUT}/{n}.png") for n, p in zip(names, d)]
+        for n in names:
+            if n in ERASE:
+                from PIL import Image
+                path = f"{OUT}/{n}.png"
+                im = np.array(Image.open(path).convert("RGBA"))
+                h, w = im.shape[:2]
+                for x0, y0, x1, y1 in ERASE[n]:
+                    im[round(y0 * h):round(y1 * h), round(x0 * w):round(x1 * w), 3] = 0
+                if n in SKIN:
+                    (x0, y0, x1, y1), (sx, sy) = SKIN[n]
+                    part = im[round(y0 * h):round(y1 * h), round(x0 * w):round(x1 * w)]
+                    r, g, b = (part[..., i].astype(int) for i in range(3))
+                    tobacco = (r - b > 45) & (r < 200) & (g < 150)       # the cigar's brown, not his skin or moustache
+                    part[tobacco, :3] = im[round(sy * h), round(sx * w), :3]
+                save(im, w, h, path)
         print(f"{sheet}: " + " ".join(f"{n} {w}x{h}" for n, (w, h) in zip(names, sizes)))
     for bg in BACKGROUNDS:
         subprocess.run(["magick", f"{SRC}/{bg}.jpeg", "-resize", "2560x", "-quality", "88", f"{OUT}/{bg[3:]}.jpg"], check=True)

@@ -5,7 +5,11 @@
     X(c_laugh, "c_laugh.png") X(c_lean, "c_lean.png") X(c_reach, "c_reach.png") X(c_ride, "c_ride.png") \
     X(c_shrug, "c_shrug.png") X(c_thumb, "c_thumb.png") X(c_tip, "c_tip.png") X(c_twohats, "c_twohats.png") \
     X(c_w1, "c_w1.png") X(c_w2, "c_w2.png") X(c_w3, "c_w3.png") X(c_w4, "c_w4.png") \
-    X(c_whisper, "c_whisper.png") X(dr_hit, "dr_hit.png") X(dr_stand, "dr_stand.png") X(f_ash, "f_ash.png") \
+    X(c_whisper, "c_whisper.png") X(d_b1, "d_b1.png") X(d_b2, "d_b2.png") X(d_b3, "d_b3.png") \
+    X(d_b4, "d_b4.png") X(d_back, "d_back.png") X(d_big, "d_big.png") X(d_boater, "d_boater.png") \
+    X(d_dive, "d_dive.png") X(d_little, "d_little.png") X(d_pop, "d_pop.png") X(d_quack, "d_quack.png") \
+    X(d_shake, "d_shake.png") X(d_sweat, "d_sweat.png") X(d_tail, "d_tail.png") X(d_tophat, "d_tophat.png") \
+    X(d_up, "d_up.png") X(dr_hit, "dr_hit.png") X(dr_stand, "dr_stand.png") X(f_ash, "f_ash.png") \
     X(f_bow, "f_bow.png") X(f_brows, "f_brows.png") X(f_fist, "f_fist.png") X(f_huff, "f_huff.png") \
     X(f_land, "f_land.png") X(f_lean, "f_lean.png") X(f_point, "f_point.png") X(f_pole, "f_pole.png") \
     X(f_sit, "f_sit.png") X(f_situp, "f_situp.png") X(f_stand, "f_stand.png") X(f_w1, "f_w1.png") \
@@ -32,15 +36,16 @@
     X(p_motoside, "p_motoside.png") X(p_puff, "p_puff.png") X(p_radio, "p_radio.png") X(p_radio2, "p_radio2.png") \
     X(p_scissors, "p_scissors.png") X(p_sidecar, "p_sidecar.png") X(p_splat, "p_splat.png") X(p_tomato, "p_tomato.png") \
     X(p_tophat, "p_tophat.png") X(p_tub, "p_tub.png") X(p_tyrol, "p_tyrol.png") X(pg_stand, "pg_stand.png") \
-    X(pg_wave, "pg_wave.png") X(r_g1, "r_g1.png") X(r_g2, "r_g2.png") X(r_g3, "r_g3.png") \
-    X(r_g4, "r_g4.png") X(r_g5, "r_g5.png") X(r_g6, "r_g6.png") X(r_g7, "r_g7.png") \
-    X(r_g8, "r_g8.png") X(r_kiss, "r_kiss.png") X(r_look, "r_look.png") X(r_off, "r_off.png") \
-    X(r_stop, "r_stop.png") X(reception_hall, "reception-hall.jpg") X(street_night, "street-night.jpg") X(street, "street.jpg") \
-    X(u_binoc, "u_binoc.png") X(u_confed, "u_confed.png") X(u_crockett, "u_crockett.png") X(u_duck, "u_duck.png") \
-    X(u_general, "u_general.png") X(u_grin, "u_grin.png") X(u_napoleon, "u_napoleon.png") X(u_r1, "u_r1.png") \
-    X(u_r2, "u_r2.png") X(u_r3, "u_r3.png") X(u_r4, "u_r4.png") X(u_redcoat, "u_redcoat.png") \
-    X(u_salute, "u_salute.png") X(u_scout, "u_scout.png") X(u_union, "u_union.png") X(u_ww1, "u_ww1.png") \
-    X(v_arms, "v_arms.png") X(v_burn, "v_burn.png") X(v_chase, "v_chase.png") X(v_fire1, "v_fire1.png") \
-    X(v_fire2, "v_fire2.png") X(v_fist, "v_fist.png") X(v_glare, "v_glare.png") X(v_grab, "v_grab.png") \
-    X(v_leg, "v_leg.png") X(v_rage, "v_rage.png") X(v_slam, "v_slam.png") X(v_tap, "v_tap.png") \
-    X(v_trip, "v_trip.png") X(v_twohats, "v_twohats.png") X(v_wet, "v_wet.png") X(v_wipe, "v_wipe.png")
+    X(pg_wave, "pg_wave.png") X(pot, "pot.jpg") X(r_g1, "r_g1.png") X(r_g2, "r_g2.png") \
+    X(r_g3, "r_g3.png") X(r_g4, "r_g4.png") X(r_g5, "r_g5.png") X(r_g6, "r_g6.png") \
+    X(r_g7, "r_g7.png") X(r_g8, "r_g8.png") X(r_kiss, "r_kiss.png") X(r_look, "r_look.png") \
+    X(r_off, "r_off.png") X(r_stop, "r_stop.png") X(reception_hall, "reception-hall.jpg") X(street_night, "street-night.jpg") \
+    X(street, "street.jpg") X(u_binoc, "u_binoc.png") X(u_confed, "u_confed.png") X(u_crockett, "u_crockett.png") \
+    X(u_duck, "u_duck.png") X(u_general, "u_general.png") X(u_grin, "u_grin.png") X(u_napoleon, "u_napoleon.png") \
+    X(u_r1, "u_r1.png") X(u_r2, "u_r2.png") X(u_r3, "u_r3.png") X(u_r4, "u_r4.png") \
+    X(u_redcoat, "u_redcoat.png") X(u_salute, "u_salute.png") X(u_scout, "u_scout.png") X(u_union, "u_union.png") \
+    X(u_ww1, "u_ww1.png") X(v_arms, "v_arms.png") X(v_burn, "v_burn.png") X(v_chase, "v_chase.png") \
+    X(v_fire1, "v_fire1.png") X(v_fire2, "v_fire2.png") X(v_fist, "v_fist.png") X(v_glare, "v_glare.png") \
+    X(v_grab, "v_grab.png") X(v_leg, "v_leg.png") X(v_rage, "v_rage.png") X(v_slam, "v_slam.png") \
+    X(v_tap, "v_tap.png") X(v_trip, "v_trip.png") X(v_twohats, "v_twohats.png") X(v_wet, "v_wet.png") \
+    X(v_wipe, "v_wipe.png")
