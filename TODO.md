@@ -9,7 +9,7 @@
 - Lemonade stand again: Harpo isn't really in the lemonade; he should stand in the tub.
 - Honks: need a deeper horn (pitch the recording down, or find a lower one).
 - War: the puff of smoke on each costume change looks wrong; find a better change.
-- Later: Harpo in bed with the horse (a new scene; needs Gemini art).
+- DONE: Harpo in bed with the horse ("GOOD NIGHT", after the ride).
 - Later: re-release the Mirror Scene (v0.1.1) with the new room.
 
 Done and liked: the room and mirror are better; the opener is good.

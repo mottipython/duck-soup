@@ -41,6 +41,8 @@ SHEETS = {
                    "r_stop", "r_look", "r_kiss", "r_off", "hs_stand", "hs_eat", "hs_bored", "hs_trot"], 12, 470),
     "12-uniforms": (["u_union", "u_confed", "u_redcoat", "u_scout", "u_crockett", "u_napoleon", "u_ww1", "u_general",
                      "u_r1", "u_r2", "u_r3", "u_r4", "u_binoc", "u_duck", "u_salute", "u_grin"], 0, 480),
+    "17-bed": (["b_sleep", "b_in", "b_out", "b_snore", "b_sit", "b_pat", "b_yawn", "b_pull",
+                "b_pullback", "b_tug", "b_honk", "b_offended", "b_kiss", "b_cuddle", "b_alone", "b_empty"], 0, 480),
     "15-ducks": (["d_b1", "d_b2", "d_b3", "d_b4", "d_quack", "d_back", "d_up", "d_sweat",
                   "d_dive", "d_tail", "d_pop", "d_shake", "d_big", "d_little", "d_boater", "d_tophat"], 0, 300),
 }
@@ -148,13 +150,14 @@ def drop_top_left(p):
     yy, xx = np.nonzero(p[..., 3] > 16)
     return p[yy.min():yy.max() + 1, xx.min():xx.max() + 1]
 
-def frame(p, k, path):
+CENTRE_BY_BOX = {"17-bed"}                    # the same bed in every frame: keep it still
+def frame(p, k, path, by_box=False):
     """One figure at scale k, on a canvas with its feet at the bottom and its body in
     the middle across."""
     solid = p[..., 3] > 128
     hgt = p.shape[0]
     band = solid[int(hgt * 0.35):int(hgt * 0.6)]
-    mid = np.nonzero(band)[1].mean() if band.any() else p.shape[1] / 2
+    mid = p.shape[1] / 2 if by_box or not band.any() else np.nonzero(band)[1].mean()
     half = int(max(mid, p.shape[1] - mid)) + 2
     canvas = np.zeros((hgt, 2 * half, 4), np.uint8)
     x0 = int(half - mid)
@@ -174,7 +177,7 @@ def main(mirror):
                 d[i] = d[i].copy()
                 d[i][:int(d[i].shape[0] * CLEAR[n][1]), :int(d[i].shape[1] * CLEAR[n][0]), 3] = 0
         d = [drop_top_left(p) if n in LOOSE_TOP_LEFT else p for n, p in zip(names, d)]
-        sizes = [frame(p, k, f"{OUT}/{n}.png") for n, p in zip(names, d)]
+        sizes = [frame(p, k, f"{OUT}/{n}.png", sheet in CENTRE_BY_BOX) for n, p in zip(names, d)]
         for n in names:
             if n in ERASE:
                 from PIL import Image
@@ -194,6 +197,11 @@ def main(mirror):
     for bg in BACKGROUNDS:
         subprocess.run(["magick", f"{SRC}/{bg}.jpeg", "-resize", "2560x", "-quality", "88", f"{OUT}/{bg[3:]}.jpg"], check=True)
         print(f"{bg[3:]}.jpg")
+    # the bedroom, cut to its wall and moonlit window: the bed in it stands at an angle,
+    # so Harpo's bed, seen straight on from the sheet, is put in front of the wall instead
+    subprocess.run(["magick", f"{SRC}/16-bedroom.jpeg", "-gravity", "northeast", "-crop", "45%x62%+0+0", "+repage",
+                    "-resize", "2560x", "-quality", "88", f"{OUT}/bedroom.jpg"], check=True)
+    print("bedroom.jpg")
     # the Mirror Scene, as it is
     src = os.path.join(mirror, "assets/art")
     for f in sorted(os.listdir(src)):

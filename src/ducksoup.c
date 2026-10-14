@@ -315,7 +315,7 @@ static Look look(const Actor *a, double t)
  * A horn, glass breaking, a puff, a splat and a match, made here rather than
  * recorded; and the words that pop up with them. Each is put on the show's time-line
  * when the show is made, and mixed into its sound track then. */
-enum { FX_HONK, FX_CRASH, FX_PUFF, FX_SPLAT, FX_MATCH, FX_BOOM, FX_SNIP, FX_QUACK, FX_QUACKS, FX_POND };
+enum { FX_HONK, FX_CRASH, FX_PUFF, FX_SPLAT, FX_MATCH, FX_BOOM, FX_SNIP, FX_QUACK, FX_QUACKS, FX_POND, FX_SNORE };
 typedef struct { double t; int kind; } Fx;
 static Fx fx[96];
 static int nfx;
@@ -329,7 +329,7 @@ static void say(double t, double dur, double x, double y, const char *s, Rgb c)
 }
 
 /* ---- the scenes ---- */
-enum { S_OPENER, S_ARRIVAL, S_LEMONADE, S_SIDECAR, S_LEMONADE2, S_RADIO, S_MIRROR, S_RIDE, S_WAR, S_FINALE };
+enum { S_OPENER, S_ARRIVAL, S_LEMONADE, S_SIDECAR, S_LEMONADE2, S_RADIO, S_MIRROR, S_RIDE, S_BED, S_WAR, S_FINALE };
 #define MAXSCENE 24
 enum { M_OPENER, M_ARRIVAL, M_SIDECAR, M_RADIO, M_RIDE, M_WAR, M_FINALE, NMUSIC, M_NONE = -1 };
 typedef struct {
@@ -846,6 +846,41 @@ static void build_ride(void)
 static const double WINDOW[4] = {0.455, 0.345, 0.495, 0.46};
 static int window_lit(double t) { return t < 12.6 || t > 18.0; }
 
+/* ---- 7b. In bed with the horse ----
+ * Harpo turns in for the night, and so does his horse, in the same bed: they sleep,
+ * the horse snores, they fight over the quilt, he honks at it, and it kisses him,
+ * and they cuddle up and go back to sleep. Close up, by the moonlit window. */
+static void build_bed(void)
+{
+    begin(S_BED, "GOOD NIGHT", SP_bedroom, 0.64, M_NONE);
+    Actor *b = actor(2, 1.0, 1.0);
+    double t = 0;
+    static const int BREATH[] = {SP_b_sleep, SP_b_in, SP_b_sleep, SP_b_out};
+    for (int i = 0; t < 6.0; i++, t += 0.75) {
+        at(b, t, 0.5, BREATH[i % 4], 0);
+        if (i % 4 == 1) say(t, 1.4, 0.6 - 0.02 * (i % 3), 0.62 + 0.04 * (i % 2), "Z", PAPER);
+    }
+    at(b, 3.0, 0.5, SP_b_snore, 0); sound(3.0, FX_SNORE);
+    at(b, 4.6, 0.5, SP_b_sleep, 0);
+    at(b, 6.0, 0.5, SP_b_sit, 0);
+    at(b, 7.2, 0.5, SP_b_pat, 0);
+    at(b, 8.4, 0.5, SP_b_yawn, 0);
+    at(b, 9.6, 0.5, SP_b_pull, 0);
+    at(b, 10.6, 0.5, SP_b_pullback, 0);
+    at(b, 11.4, 0.5, SP_b_tug, 0);
+    at(b, 12.0, 0.5, SP_b_pull, 0);
+    at(b, 12.5, 0.5, SP_b_pullback, 0);
+    at(b, 13.0, 0.5, SP_b_tug, 0);
+    at(b, 14.2, 0.5, SP_b_honk, 0); sound(14.3, FX_HONK); say(14.3, 1.0, 0.62, 0.66, "HONK!", RED);
+    at(b, 15.6, 0.5, SP_b_offended, 0);
+    at(b, 17.2, 0.5, SP_b_kiss, 0); say(17.3, 1.6, 0.5, 0.62, "+", RED);
+    at(b, 19.0, 0.5, SP_b_cuddle, 0);
+    for (t = 20.5; t < 25.5; t += 1.6) say(t, 1.4, 0.52, 0.62, "Z", PAPER);
+    sound(21.0, FX_SNORE);
+    end(26.0);
+    cur->iris_x = 0.5; cur->iris_y = 0.7;
+}
+
 /* ---- 8. The war ----
  * Groucho fights it in a new uniform every time we look. */
 static void build_war(void)
@@ -916,7 +951,7 @@ static void build_show(void)
     nact = nfx = nbubble = NSCENE = 0;
     build_opener();
     void (*const order[])(void) = {build_arrival, build_lemonade, build_lemonade2, build_radio,
-                                   build_mirror, build_ride, build_war, build_finale};
+                                   build_mirror, build_ride, build_bed, build_war, build_finale};
     int n = sizeof order / sizeof *order;
     for (int i = 0; i < n; i++) {
         order[i]();
@@ -1026,6 +1061,16 @@ static void mix_fx(float *buf, int len, int at, int kind)
     switch (kind) {
     case FX_HONK:                                  /* the bulb horn: one honk, now and then two */
         add_sample(buf, len, at, frand() < 0.25 ? SM_HONK3 : SM_HONK1 + (int)(frand() * 2), 0.9);
+        break;
+    case FX_SNORE:                                 /* a horse's snore: a long low rattle, and a whistle out */
+        for (int i = 0; i < RATE * 1.6 && at + i < len; i++) {
+            double t = (double)i / RATE, in = t < 0.9;
+            double env = in ? sin(M_PI * t / 0.9) : sin(M_PI * (t - 0.9) / 0.7) * 0.5;
+            lp += (noise() - lp) * (in ? 0.05 : 0.3);
+            double rattle = in ? (0.6 + 0.4 * sin(2 * M_PI * 28 * t)) : 1;
+            double whistle = in ? 0 : 0.25 * sin(2 * M_PI * (900 - 300 * (t - 0.9)) * t);
+            buf[at + i] += (float)(env * (lp * 2.2 * rattle + whistle) * 0.5);
+        }
         break;
     case FX_QUACK:
         add_sample(buf, len, at, SM_QUACK1 + (int)(frand() * 5) % 5, 0.75);
@@ -1524,7 +1569,7 @@ static void draw_stage(int s, double t)
         }
     for (int i = 0; i < n; i++) draw_actor(&act[draw_order[i]], t, tall);
     flush(ren);
-    if (sc->kind == S_RIDE) rect(0, 0, sw, sh, (SDL_Color){10, 16, 50, 40});
+    if (sc->kind == S_RIDE || sc->kind == S_BED) rect(0, 0, sw, sh, (SDL_Color){10, 16, 50, 40});
     draw_bubbles(s, t, tall, 0);
     if (sc->kind == S_OPENER) {
         /* the title drops in with a bounce on its ropes, and goes up again before the curtain comes down */
