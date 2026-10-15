@@ -6,8 +6,8 @@
     (public domain), given the same old-record sound as the rest of the music;
   - ducks: a pond of Pekin ducks and mallards quacking, and a mallard's
     "QUACK quack quack quack", cut into single quacks (CC BY-SA);
-  - the mirror breaking: a glass break made for the game Duckstruction (CC0,
-    Till Behrend on OpenGameArt), with a deeper copy under it;
+  - the mirror breaking: "Window Shattering" by Mike Koenig (SoundBible,
+    CC BY 3.0), the crash and the pieces tinkling down;
   - the horn: "Symphony of honks from Harpo's horn", found by the user in
     public-domain media, cut into a long honk, a middling one, a short one, a
     double and a flurry (before it, a child's plastic bulb horn, CC0, AntumDeluge on OpenGameArt).
@@ -27,11 +27,9 @@ HONK = (f"highpass=f=100,asetrate={22050 * DEEP:.0f},aresample=22050,"
         "equalizer=f=300:t=q:w=1:g=5")
 # Harpo-style honks, found by the user in public-domain media, as they are
 HARPO = "highpass=f=90"
-# the mirror breaking: a glass break, with a slower, deeper copy of itself under it
-# for the weight of a big pane
-CRASH = ("asplit[a][b];[b]asetrate=16538,aresample=22050,volume=0.8[c];"
-         "[a][c]amix=inputs=2:duration=longest:normalize=0,highpass=f=60")
-STRETCH = {"s_crash": 1 / 0.75}
+# the mirror breaking: a window pane shattering, and the pieces tinkling down
+CRASH = "highpass=f=60"
+STRETCH = {}
 # name: recording, start, end (seconds), and how it is evened out
 CUTS = {
     "s_pond": ("ducks-pekin-and-mallard.ogg", 64.0, 80.5, "highpass=f=250"),
@@ -41,7 +39,7 @@ CUTS = {
     "s_quack3": ("ducks-mallard-female.mp3", 7.63, 7.92, "highpass=f=200"),
     "s_quack4": ("ducks-pekin-and-mallard.ogg", 65.0, 65.42, "highpass=f=300"),
     "s_quack5": ("ducks-pekin-and-mallard.ogg", 79.15, 79.80, "highpass=f=300"),
-    "s_crash": ("oga-glass-break/glass_breaking.wav", 0.0, 1.05, CRASH),
+    "s_crash": ("soundbible-glass/window-shattering.wav", 0.0, 4.26, CRASH),
     "s_honk1": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 0.30, 0.80, HARPO),   # a long one, right in his face
     "s_honk2": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 0.81, 1.20, HARPO),   # a middling one
     "s_honk3": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 1.23, 1.68, HARPO),   # honk-honk
