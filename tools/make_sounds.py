@@ -18,6 +18,10 @@ import os, subprocess, sys
 OUT = "assets/art"
 OLD_RECORD = ("highpass=f=140,lowpass=f=4200,equalizer=f=1800:t=q:w=1:g=3,"
               "acompressor=threshold=-22dB:ratio=3:attack=10:release=200,loudnorm=I=-18:TP=-2:LRA=9")
+# the horn is a small one: played at DEEP of its speed it is a big brass bulb horn
+DEEP = 0.62
+HONK = (f"highpass=f=120,asetrate={22050 * DEEP:.0f},aresample=22050,"
+        "equalizer=f=220:t=q:w=1:g=5,equalizer=f=3000:t=q:w=1:g=-4")
 # name: recording, start, end (seconds), and how it is evened out
 CUTS = {
     "s_pond": ("ducks-pekin-and-mallard.ogg", 64.0, 80.5, "highpass=f=250"),
@@ -27,15 +31,15 @@ CUTS = {
     "s_quack3": ("ducks-mallard-female.mp3", 7.63, 7.92, "highpass=f=200"),
     "s_quack4": ("ducks-pekin-and-mallard.ogg", 65.0, 65.42, "highpass=f=300"),
     "s_quack5": ("ducks-pekin-and-mallard.ogg", 79.15, 79.80, "highpass=f=300"),
-    "s_honk1": ("horn-bocina-del-panadero.ogg", 0.42, 0.68, "highpass=f=150"),
-    "s_honk2": ("horn-bocina-del-panadero.ogg", 2.04, 2.32, "highpass=f=150"),
-    "s_honk3": ("horn-bocina-del-panadero.ogg", 3.56, 4.30, "highpass=f=150"),   # a double honk
+    "s_honk1": ("horn-bocina-del-panadero.ogg", 0.42, 0.68, HONK),
+    "s_honk2": ("horn-bocina-del-panadero.ogg", 2.04, 2.32, HONK),
+    "s_honk3": ("horn-bocina-del-panadero.ogg", 3.56, 4.30, HONK),   # a double honk
 }
 
 def main(src):
     os.makedirs(OUT, exist_ok=True)
     for name, (f, a, b, flt) in CUTS.items():
-        d = b - a
+        d = (b - a) / (DEEP if flt == HONK else 1)
         fade = min(0.015, d / 4)
         chain = (f"atrim={a}:{b},asetpts=PTS-STARTPTS,aformat=channel_layouts=mono,aresample=22050,{flt},"
                  f"afade=t=in:d={fade},afade=t=out:st={d - fade * 2}:d={fade * 2},loudnorm=I=-16:TP=-1.5")

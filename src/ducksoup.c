@@ -378,8 +378,8 @@ static void build_opener(void)
     begin(S_OPENER, NULL, SP_pot, 0.26, M_OPENER);
     /* the water is an oval across the pot: ducks at the back paddle along 0.255,
      * those in front along 0.31, a little bigger */
-    Actor *a = actor(2, 0.31, 1.0), *b = actor(2, 0.315, 0.95), *big = actor(1, 0.252, 0.8),
-          *little = actor(1, 0.252, 0.8), *top = actor(1, 0.247, 0.78), *boat = actor(2, 0.30, 0.95);
+    /* four ducks, as in the film: one for each brother */
+    Actor *a = actor(2, 0.31, 1.0), *b = actor(2, 0.315, 0.95), *top = actor(1, 0.25, 0.8), *boat = actor(2, 0.30, 0.95);
     /* A, in front, the quacker */
     duck_swim(a, 0, 3.2, 0.44, 0.52);
     at(a, 3.4, 0.52, SP_d_up, 0);                   /* the title comes down */
@@ -400,15 +400,6 @@ static void build_opener(void)
     at(b, 11.9, 0.40, SP_d_shake, 0);
     at(b, 12.8, 0.40, SP_d_back, 0);
     duck_swim(b, 14.0, OPENER_LEN, 0.40, 0.37);
-    /* at the back, the big one and her duckling behind her */
-    for (int i = 0; i < 2; i++) {
-        Actor *d = i ? little : big;
-        int pose = i ? SP_d_little : SP_d_big;
-        double lag = i * 0.5, off = i ? -0.075 : 0;
-        go(d, 0, 0.42 + off, pose, 0, GLIDE); go(d, 6.0 + lag, 0.6 + off * -1 + (i ? 0 : 0), pose, 1, GLIDE);
-        go(d, 6.6 + lag, 0.6 - off, pose, 1, GLIDE); go(d, 14.0 + lag, 0.42 - off, pose, 0, GLIDE);
-        go(d, 14.6 + lag, 0.42 + off, pose, 0, GLIDE); go(d, OPENER_LEN, 0.55 + off, pose, 0, HOLD);
-    }
     sound(5.6, FX_QUACK); sound(14.8, FX_QUACK);
     /* and the two in hats, gliding past each other with dignity */
     go(top, 0, 0.62, SP_d_tophat, 1, GLIDE); go(top, 10.0, 0.40, SP_d_tophat, 1, GLIDE);
