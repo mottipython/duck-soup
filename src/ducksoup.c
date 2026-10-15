@@ -615,18 +615,31 @@ static void build_lemonade2(void)
 {
     begin(S_LEMONADE2, "THE LEMONADE STAND AGAIN", SP_street, 0.40, M_NONE);
     const double VX = 0.67, TX = 0.5;
+    /* Whoever is in the tub is drawn in front of it but only down to the surface
+     * of the lemonade (LIQUID, on the picture), so that he is in it, not behind it */
+    const double LIQUID = 0.771;
     Actor *v = actor(2, 0.88, 1.0), *h = actor(2, 0.885, 1.0), *tub = actor(3, 0.9, 0.62);
+    Actor *hin = actor(4, 0.89, 1.0), *vin = actor(4, 0.89, 1.0);
+    hin->cut = vin->cut = LIQUID;
     at(tub, 0, TX, SP_p_tub, 0);
+    at(hin, 0, TX, GONE, 0); at(vin, 0, TX, GONE, 0);
     at(v, 0, VX, SP_v_wipe, 1);
     at(h, 0, -0.3, GONE, 0); go(h, 1.0, -0.28, CYCLE(CY_HARPO), 0, STRIDE);
     at(h, 3.6, 0.42, SP_h_tip, 0);
     at(h, 4.4, 0.42, SP_h_foot, 0);
     Key *k = key(h, 5.6, 0.42, 0, SP_h_foot, 0, GLIDE); k->arc = 0.35;
-    key(h, 6.2, TX, 0.1, SP_h_wade, 0, HOLD);
+    key(h, 6.15, TX, 0.12, GONE, 0, HOLD);
+    /* in he goes, and paddles, up to his shins in it */
+    sound(6.2, FX_SPLAT);
+    for (double t = 6.15; t < 11.4; t += 0.5) {
+        key(hin, t, TX, 0.0, SP_h_wade, 0, GLIDE);
+        key(hin, t + 0.25, TX, 0.035, SP_h_wade, 0, GLIDE);
+    }
+    at(hin, 11.6, TX, GONE, 0);
+    k = key(h, 11.6, TX, 0.1, SP_h_wade, 0, GLIDE); k->arc = 0.35;
     at(v, 7.0, VX, SP_v_glare, 1);
     at(v, 8.2, VX, SP_v_tap, 1);
     at(v, 10.2, VX, SP_v_rage, 1);
-    k = key(h, 11.6, TX, 0.1, SP_h_wade, 0, GLIDE); k->arc = 0.35;
     at(h, 12.2, 0.40, SP_h_strike, 0); sound(12.6, FX_MATCH);
     at(h, 13.2, 0.40, SP_h_match, 0);
     at(v, 13.0, VX, SP_v_arms, 1);
@@ -636,8 +649,9 @@ static void build_lemonade2(void)
     go(h, 16.6, VX - 0.075, CYCLE(CY_HARPO), 1, STRIDE); at(h, 19.4, -0.3, GONE, 0);
     at(v, 16.9, VX, SP_v_fire2, 1);
     k = key(v, 18.6, VX, 0, SP_v_chase, 1, GLIDE); k->arc = 0.5;
-    key(v, 19.4, TX, 0.08, SP_v_wet, 1, HOLD); sound(19.4, FX_SPLAT);
-    key(v, 22.4, TX, 0.08, SP_v_burn, 1, HOLD);
+    key(v, 19.35, TX, 0.12, GONE, 1, HOLD);
+    at(vin, 19.35, TX, SP_v_wet, 1); sound(19.4, FX_SPLAT);   /* and the seller sits down in it */
+    at(vin, 22.4, TX, SP_v_burn, 1);
     end(25.5);
     cur->iris_x = 0.5; cur->iris_y = 0.6;
 }
