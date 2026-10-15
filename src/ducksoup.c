@@ -242,7 +242,7 @@ static const struct { int first, n; double stride, fps; } CYCLES[NCYCLE] = {
 typedef struct { double t, x, y; int pose, flip, how; double arc, spin, fl, sz; } Key;   /* fl, sz: a floor and size of its own, or 0 */
 typedef struct Actor Actor;
 struct Actor {
-    Key k[72];
+    Key k[128];
     int n, layer;
     double floor, size, alpha, cut;   /* cut: drawn only above this height on the picture, or 0 */
     Actor *ride0, *ride1;             /* what it rides in or on (the second from ride_at on), or none */
@@ -362,7 +362,15 @@ static void begin(int kind, const char *card, int bg, double tall, int music)
     cur->iris_x = 0.5; cur->iris_y = 0.55;
     cur->first = nact; cur->fx0 = nfx; cur->b0 = nbubble;
 }
-static void end(double len) { cur->len = len; cur->n = nact - cur->first; cur->fx1 = nfx; cur->b1 = nbubble; }
+static void end(double len)
+{
+    cur->len = len; cur->n = nact - cur->first; cur->fx1 = nfx; cur->b1 = nbubble;
+    for (int i = cur->first; i < nact; i++) {     /* each track in time order, keys at the same time as made */
+        Actor *a = &act[i];
+        for (int j = 1; j < a->n; j++)
+            for (int k = j; k > 0 && a->k[k - 1].t > a->k[k].t; k--) { Key x = a->k[k]; a->k[k] = a->k[k - 1]; a->k[k - 1] = x; }
+    }
+}
 
 /* ---- 0. The opening titles ----
  * As the picture's own titles: ducks paddling in a pot on the fire. The curtain goes
@@ -450,6 +458,26 @@ static void build_arrival(void)
         at(drum, t, 0.06, SP_dr_hit, 0); at(drum, t + 0.16, 0.06, SP_dr_stand, 0);
         at(page, t, 0.94, ((int)(t / 0.9) & 1) ? SP_pg_wave : SP_pg_stand, 1);
     }
+    /* Mrs. Teasdale, a cut-out of the real Margaret Dumont on a stick, waits for him
+     * at the front: she taps her stick, huffs at the staircase, huffs at him when he
+     * comes down the pole instead, taps through his waiting for himself, and swoons
+     * when he bows to her */
+    Actor *dm = actor(4, 0.95, 1.3);
+    const double DX = 0.235;
+    at(dm, 0, DX, SP_dm_wait, 0);
+    static const double TAPS[][2] = {{1.6, 4.2}, {7.4, 10.0}, {11.6, 12.8}, {19.8, 22.4}, {23.2, 25.2}};
+    for (int i = 0; i < 5; i++)
+        for (double t = TAPS[i][0]; t < TAPS[i][1]; t += 0.32) {
+            key(dm, t, DX, 0.03, SP_dm_wait, 0, HOLD);
+            key(dm, t + 0.12, DX, 0, SP_dm_wait, 0, HOLD);
+        }
+    at(dm, 5.0, DX, SP_dm_huff, 0); at(dm, 5.5, DX, SP_dm_wait, 0); at(dm, 5.8, DX, SP_dm_huff, 0); at(dm, 6.3, DX, SP_dm_wait, 0);
+    at(dm, 10.6, DX, SP_dm_huff, 0); at(dm, 11.1, DX, SP_dm_wait, 0);
+    at(dm, 15.2, DX, SP_dm_huff, 0); at(dm, 15.6, DX, SP_dm_wait, 0); at(dm, 15.9, DX, SP_dm_huff, 0); at(dm, 16.5, DX, SP_dm_wait, 0);
+    at(dm, 22.6, DX, SP_dm_huff, 0); at(dm, 23.0, DX, SP_dm_wait, 0);
+    at(dm, 27.6, DX, SP_dm_swoon, 0);
+    at(dm, 30.4, DX, SP_dm_wait, 0);
+    at(dm, 32.0, DX, SP_dm_huff, 0); at(dm, 32.6, DX, SP_dm_wait, 0);
     /* His Excellency, down the pole at the back of the hall and then down the aisle */
     const double BACK = 0.745, BACK_SZ = 0.55, FRONT = 0.93, FRONT_SZ = 1.2;
     /* the pole in his drawing is left of its middle: set him so that it is on the
@@ -470,7 +498,7 @@ static void build_arrival(void)
     at(f, 23.0, 0.44, SP_f_brows, 0);
     at(f, 24.4, 0.44, SP_f_ash, 0);
     go(f, 25.6, 0.44, CYCLE(CY_FIREFLY), 1, STRIDE);
-    at(f, 27.2, 0.32, SP_f_bow, 0);
+    at(f, 27.2, 0.32, SP_f_bow, 1);                /* to her */
     at(f, 29.8, 0.32, SP_f_stand, 0);
     go(f, 30.4, 0.32, CYCLE(CY_FIREFLY), 0, STRIDE);
     at(f, 34.4, 1.25, GONE, 0);

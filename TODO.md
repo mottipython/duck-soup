@@ -2,7 +2,7 @@
 
 - DONE: Opener: the cauldron sits lower in the picture.
 - DONE (check with the user): better curtains, drawn velvet with folds, tie-backs and swags. If they still don't like them: cut-out photographs of real theatre curtains, Monty Python style (public-domain, e.g. Commons or the Met).
-- Welcome scene: add someone waiting for His Excellency, looking impatient (tapping a foot, checking a watch). WAITING FOR ART: Mrs. Teasdale's sheet, prompt 18-teasdale in assets/PROMPTS.md.
+- DONE: Welcome scene: someone waiting impatiently: the real Margaret Dumont as a photo cut-out on a stick (from Animal Crackers, via captain-spaulding), tapping, huffing, swooning at his bow. (The 18-teasdale Gemini prompt is not needed.)
 - DONE: Welcome scene: Groucho's slide down the pole looks wrong; redo it.
 - DONE: Sidecar: legs and bodies still don't sit right on the motorcycle and in the sidecar.
 - DONE: Sidecar bits: make them smoother overall: ease the ride in and the stop (a little
