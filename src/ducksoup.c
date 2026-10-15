@@ -475,7 +475,7 @@ static void build_arrival(void)
     at(dm, 10.6, DX, SP_dm_huff, 0); at(dm, 11.1, DX, SP_dm_wait, 0);
     at(dm, 15.2, DX, SP_dm_huff, 0); at(dm, 15.6, DX, SP_dm_wait, 0); at(dm, 15.9, DX, SP_dm_huff, 0); at(dm, 16.5, DX, SP_dm_wait, 0);
     at(dm, 22.6, DX, SP_dm_huff, 0); at(dm, 23.0, DX, SP_dm_wait, 0);
-    at(dm, 27.6, DX, SP_dm_swoon, 0);
+    at(dm, 28.0, DX, SP_dm_swoon, 0);
     at(dm, 30.4, DX, SP_dm_wait, 0);
     at(dm, 32.0, DX, SP_dm_huff, 0); at(dm, 32.6, DX, SP_dm_wait, 0);
     /* His Excellency, down the pole at the back of the hall and then down the aisle */
@@ -501,11 +501,14 @@ static void build_arrival(void)
     depth(key(f, 21.8, LX, 0, SP_f_lean, 0, HOLD), LF, LS);
     depth(key(f, 23.0, LX, 0, SP_f_brows, 1, HOLD), LF, LS);
     depth(key(f, 24.2, LX, 0, SP_f_ash, 1, HOLD), LF, LS);
-    depth(key(f, 25.2, LX, 0, CYCLE(CY_FIREFLY), 1, STRIDE), LF, LS);
-    at(f, 27.2, 0.32, SP_f_bow, 1);                /* to her */
-    at(f, 29.8, 0.32, SP_f_stand, 0);
-    go(f, 30.4, 0.32, CYCLE(CY_FIREFLY), 0, STRIDE);
-    at(f, 34.4, 1.25, GONE, 0);
+    /* down to the front, to stand beside her, a step away, and bow to her */
+    const double BX = 0.37, BF = 0.95, BS = 1.12;
+    depth(key(f, 25.2, LX, 0, CYCLE(CY_FIREFLY_T), 1, SLIDE), LF, LS);
+    depth(key(f, 27.2, BX, 0, SP_f_stand, 1, HOLD), BF, BS);
+    depth(key(f, 27.6, BX, 0, SP_f_bow, 1, HOLD), BF, BS);        /* to her */
+    depth(key(f, 29.8, BX, 0, SP_f_stand, 0, HOLD), BF, BS);
+    depth(key(f, 30.4, BX, 0, CYCLE(CY_FIREFLY), 0, STRIDE), BF, BS);
+    depth(key(f, 34.4, 1.25, 0, GONE, 0, HOLD), BF, BS);
     end(36.5);
     cur->iris_x = 0.5; cur->iris_y = 0.6;
 }
@@ -1719,7 +1722,10 @@ static void placard(double drop, double bounce)
     border(cx - w / 2 + unit, y + unit, cx + w / 2 - unit, y + h - unit, unit * 0.5, gold);
     for (int i = 0; i < 4; i++) disc(i & 1 ? cx + w / 2 - unit * 2 : cx - w / 2 + unit * 2, i & 2 ? y + h - unit * 2 : y + unit * 2, unit * 0.8, gold, gold);
     disc(cx - w * 0.3, y + unit * 0.6, unit * 0.6, gold, gold); disc(cx + w * 0.3, y + unit * 0.6, unit * 0.6, gold, gold);
-    double s = h / 34;
+    /* the lettering as big as the plate's height allows, but never wider than the
+     * plate inside its border, whatever the screen's shape */
+    double s = fmin(h / 34, (w - unit * 16) / text_width("FOUR MARX BROTHERS", 0.72));
+    s = fmin(s, (w - unit * 16) / text_width("DUCK SOUP", 1.4));
     text("THE", cx, y + h * 0.065, s * 0.42, 0.9, silver);
     text("FOUR MARX BROTHERS", cx, y + h * 0.19, s * 0.72, 1.0, silver);
     text("IN", cx, y + h * 0.36, s * 0.32, 0.9, grey);
