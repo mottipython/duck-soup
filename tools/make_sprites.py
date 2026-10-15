@@ -54,6 +54,8 @@ CLEAR = {"gd_arch": (0.27, 0.2)}
 # of the written frame): Groucho flicking his ash has a cigar in his mouth as well
 ERASE = {"f_ash": [(0.64, 0.215, 0.75, 0.30)]}
 # and where the rest of it shows on his face, painted over in the colour of his chin
+# dark marks painted out with the skin beside them: box, and where to take the skin from
+BROW = {"b_cuddle": ((0.586, 0.326, 0.630, 0.356), (0.652, 0.357))}   # a stray black eyebrow on Harpo
 SKIN = {"f_ash": ((0.56, 0.235, 0.64, 0.295), (0.55, 0.315))}
 BACKGROUNDS = ["14-pot", "01-reception-hall", "04-street", "09-garden", "11-street-night", "13-battlefield"]
 
@@ -179,6 +181,16 @@ def main(mirror):
         d = [drop_top_left(p) if n in LOOSE_TOP_LEFT else p for n, p in zip(names, d)]
         sizes = [frame(p, k, f"{OUT}/{n}.png", sheet in CENTRE_BY_BOX) for n, p in zip(names, d)]
         for n in names:
+            if n in BROW:
+                from PIL import Image
+                path = f"{OUT}/{n}.png"
+                im = np.array(Image.open(path).convert("RGBA"))
+                h, w = im.shape[:2]
+                (x0, y0, x1, y1), (sx, sy) = BROW[n]
+                part = im[round(y0 * h):round(y1 * h), round(x0 * w):round(x1 * w)]
+                skin = im[round(sy * h), round(sx * w), :3].astype(int)
+                part[np.abs(part[..., :3].astype(int) - skin).sum(-1) > 45, :3] = skin   # the mark and its soft edge
+                save(im, w, h, path)
             if n in ERASE:
                 from PIL import Image
                 path = f"{OUT}/{n}.png"
