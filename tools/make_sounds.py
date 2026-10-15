@@ -6,8 +6,9 @@
     (public domain), given the same old-record sound as the rest of the music;
   - ducks: a pond of Pekin ducks and mallards quacking, and a mallard's
     "QUACK quack quack quack", cut into single quacks (CC BY-SA);
-  - the horn: the user's "Symphony of honks from Harpo's horn", cut into single
-    honks (before it, a child's plastic bulb horn, CC0, AntumDeluge on OpenGameArt).
+  - the horn: "Symphony of honks from Harpo's horn", found by the user in
+    public-domain media, cut into a long honk, a middling one, a short one, a
+    double and a flurry (before it, a child's plastic bulb horn, CC0, AntumDeluge on OpenGameArt).
 
     tools/make_sounds.py SOUNDS_DIR
 
@@ -22,7 +23,7 @@ OLD_RECORD = ("highpass=f=140,lowpass=f=4200,equalizer=f=1800:t=q:w=1:g=3,"
 DEEP = 0.55
 HONK = (f"highpass=f=100,asetrate={22050 * DEEP:.0f},aresample=22050,"
         "equalizer=f=300:t=q:w=1:g=5")
-# the user's own recording of Harpo-style honks, as it is
+# Harpo-style honks, found by the user in public-domain media, as they are
 HARPO = "highpass=f=90"
 # name: recording, start, end (seconds), and how it is evened out
 CUTS = {
@@ -33,9 +34,11 @@ CUTS = {
     "s_quack3": ("ducks-mallard-female.mp3", 7.63, 7.92, "highpass=f=200"),
     "s_quack4": ("ducks-pekin-and-mallard.ogg", 65.0, 65.42, "highpass=f=300"),
     "s_quack5": ("ducks-pekin-and-mallard.ogg", 79.15, 79.80, "highpass=f=300"),
-    "s_honk1": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 0.30, 0.80, HARPO),
-    "s_honk2": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 0.81, 1.20, HARPO),
-    "s_honk3": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 1.23, 1.68, HARPO),   # a double honk
+    "s_honk1": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 0.30, 0.80, HARPO),   # a long one, right in his face
+    "s_honk2": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 0.81, 1.20, HARPO),   # a middling one
+    "s_honk3": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 1.23, 1.68, HARPO),   # honk-honk
+    "s_honk4": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 2.22, 2.47, HARPO),   # a short one
+    "s_honk5": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 3.42, 4.42, HARPO),   # a flurry
 }
 
 def main(src):

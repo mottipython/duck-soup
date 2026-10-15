@@ -316,7 +316,7 @@ static Look look(const Actor *a, double t)
  * A horn, glass breaking, a puff, a splat and a match, made here rather than
  * recorded; and the words that pop up with them. Each is put on the show's time-line
  * when the show is made, and mixed into its sound track then. */
-enum { FX_HONK, FX_CRASH, FX_PUFF, FX_SPLAT, FX_MATCH, FX_BOOM, FX_SNIP, FX_QUACK, FX_QUACKS, FX_POND, FX_SNORE };
+enum { FX_HONK, FX_HONK_MID, FX_HONK_SHORT, FX_HONK_TWO, FX_HONK_MANY, FX_CRASH, FX_PUFF, FX_SPLAT, FX_MATCH, FX_BOOM, FX_SNIP, FX_QUACK, FX_QUACKS, FX_POND, FX_SNORE };
 typedef struct { double t; int kind; } Fx;
 static Fx fx[96];
 static int nfx;
@@ -600,7 +600,7 @@ static void build_sidecar_bit(int which)
         go(side, 0.4, 1.35, SP_p_sidecar, 1, SLIDE); at(side, 3.6, -0.4, GONE, 0);
         hr->ride0 = side; hr->seat = PASSENGER; hr->layer = 4;
         at(hr, 0, 0, SP_h_ride, 1);
-        sound(1.9, FX_HONK); say(1.9, 1.0, 0.5, 1.2, "HONK!", RED);
+        sound(1.9, FX_HONK_TWO); say(1.9, 1.0, 0.5, 1.2, "HONK HONK!", RED);   /* honk-honk, going by */
         cur->music_stop = 4.6;
         end(4.6);
         cur->iris_x = 0.2; cur->iris_y = 0.66;
@@ -717,7 +717,7 @@ static void build_radio(void)
     at(h, 3.4, 0.26, SP_h_tip, 1);
     at(h, 4.2, 0.24, SP_h_snip, 1); sound(4.6, FX_SNIP);
     at(h, 5.4, 0.26, SP_h_tip, 0);
-    at(h, 6.4, 0.25, SP_h_honk, 1); sound(6.5, FX_HONK);
+    at(h, 6.4, 0.25, SP_h_honk, 1); sound(6.5, FX_HONK_MANY);             /* a flurry at it: it plays on */
     at(h, 7.6, 0.26, SP_h_smitten, 0);
     go(h, 8.6, 0.26, CYCLE(CY_HARPO), 1, STRIDE);  /* backing away from it */
     at(h, radio_crash, 0.5, SP_h_leg, 0);
@@ -826,7 +826,7 @@ static void build_mirror(void)
     /* the horn */
     g(SP_mr_g_stand, 1.0);
     h(now, SP_mr_h_horn);
-    sound(now + 0.1, FX_HONK);
+    sound(now + 0.1, FX_HONK_SHORT);                /* the giveaway: one short honk */
     say(now + 0.1, 1.0, 1 - NEAR, 1.0, "HONK!", RED);
     g(SP_mr_g_stand, 0.9);
     h(now, SP_mr_h_grin);
@@ -946,7 +946,7 @@ static void build_bed(void)
     at(b, 12.0, 0.5, SP_b_pull, 0);
     at(b, 12.5, 0.5, SP_b_pullback, 0);
     at(b, 13.0, 0.5, SP_b_tug, 0);
-    at(b, 14.2, 0.5, SP_b_honk, 0); sound(14.3, FX_HONK); say(14.3, 1.0, 0.62, 0.66, "HONK!", RED);
+    at(b, 14.2, 0.5, SP_b_honk, 0); sound(14.3, FX_HONK_MID); say(14.3, 1.0, 0.62, 0.66, "HONK!", RED);
     at(b, 15.6, 0.5, SP_b_offended, 0);
     at(b, 17.2, 0.5, SP_b_kiss, 0); say(17.3, 1.6, 0.5, 0.62, "+", RED);
     at(b, 19.0, 0.5, SP_b_cuddle, 0);
@@ -1010,7 +1010,7 @@ static void build_finale(void)
     Actor *c = actor(2, 0.9, 1.0), *f = actor(2, 0.9, 1.0), *h = actor(2, 0.9, 1.0), *v = actor(2, 0.9, 1.0);
     at(c, 0, 0.24, SP_c_hands, 0); at(f, 0, 0.42, SP_f_stand, 0); at(h, 0, 0.58, SP_h_tip, 1); at(v, 0, 0.76, SP_v_arms, 1);
     at(c, 1.6, 0.24, SP_c_tip, 0); at(f, 1.6, 0.42, SP_f_bow, 0); at(h, 1.6, 0.58, SP_h_tip, 1); at(v, 1.6, 0.76, SP_v_glare, 1);
-    at(c, 3.6, 0.24, SP_c_hands, 0); at(f, 3.6, 0.42, SP_f_brows, 0); at(h, 3.6, 0.58, SP_h_honk, 1); sound(3.7, FX_HONK);
+    at(c, 3.6, 0.24, SP_c_hands, 0); at(f, 3.6, 0.42, SP_f_brows, 0); at(h, 3.6, 0.58, SP_h_honk, 1); sound(3.7, FX_HONK_TWO);
     tomato(4.4, 0.6, 0.76, 0.75, 0); at(v, 5.3, 0.76, SP_v_rage, 1);
     tomato(6.2, 0.3, 0.24, 0.75, 0); at(c, 7.1, 0.24, SP_c_shrug, 0);
     tomato(7.8, 0.5, 0.42, 0.8, 0); at(f, 8.7, 0.42, SP_f_huff, 0);
@@ -1084,13 +1084,15 @@ static const unsigned char *MUSIC_FILE[NMUSIC][2] = {
  * single quacks, and a rubber bulb horn */
 ART(s_pond, "s_pond.ogg") ART(s_quacks, "s_quacks.ogg") ART(s_quack1, "s_quack1.ogg") ART(s_quack2, "s_quack2.ogg")
 ART(s_quack3, "s_quack3.ogg") ART(s_quack4, "s_quack4.ogg") ART(s_quack5, "s_quack5.ogg")
-ART(s_honk1, "s_honk1.ogg") ART(s_honk2, "s_honk2.ogg") ART(s_honk3, "s_honk3.ogg")
-enum { SM_POND, SM_QUACKS, SM_QUACK1, SM_QUACK5 = SM_QUACK1 + 4, SM_HONK1, SM_HONK3 = SM_HONK1 + 2, NSAMPLE };
+ART(s_honk1, "s_honk1.ogg") ART(s_honk2, "s_honk2.ogg") ART(s_honk3, "s_honk3.ogg") ART(s_honk4, "s_honk4.ogg")
+ART(s_honk5, "s_honk5.ogg")
+enum { SM_POND, SM_QUACKS, SM_QUACK1, SM_QUACK5 = SM_QUACK1 + 4, SM_HONK1, SM_HONK2, SM_HONK3, SM_HONK4, SM_HONK5, NSAMPLE };
 static const unsigned char *SAMPLE_FILE[NSAMPLE][2] = {
     {art_s_pond, art_s_pond_end}, {art_s_quacks, art_s_quacks_end},
     {art_s_quack1, art_s_quack1_end}, {art_s_quack2, art_s_quack2_end}, {art_s_quack3, art_s_quack3_end},
     {art_s_quack4, art_s_quack4_end}, {art_s_quack5, art_s_quack5_end},
     {art_s_honk1, art_s_honk1_end}, {art_s_honk2, art_s_honk2_end}, {art_s_honk3, art_s_honk3_end},
+    {art_s_honk4, art_s_honk4_end}, {art_s_honk5, art_s_honk5_end},
 };
 static short *sample[NSAMPLE];
 static int sample_len[NSAMPLE];
@@ -1136,9 +1138,12 @@ static void mix_fx(float *buf, int len, int at, int kind)
 {
     double lp = 0;
     switch (kind) {
-    case FX_HONK:                                  /* the bulb horn: one honk, now and then two */
-        add_sample(buf, len, at, frand() < 0.25 ? SM_HONK3 : SM_HONK1 + (int)(frand() * 2), 0.9);
-        break;
+    /* Harpo's horn: a long honk, a middling one, a short one, honk-honk, and a flurry */
+    case FX_HONK: add_sample(buf, len, at, SM_HONK1, 0.9); break;
+    case FX_HONK_MID: add_sample(buf, len, at, SM_HONK2, 0.9); break;
+    case FX_HONK_SHORT: add_sample(buf, len, at, SM_HONK4, 0.9); break;
+    case FX_HONK_TWO: add_sample(buf, len, at, SM_HONK3, 0.9); break;
+    case FX_HONK_MANY: add_sample(buf, len, at, SM_HONK5, 0.9); break;
     case FX_SNORE:                                 /* a horse's snore: a long low rattle, and a whistle out */
         for (int i = 0; i < RATE * 1.6 && at + i < len; i++) {
             double t = (double)i / RATE, in = t < 0.9;
