@@ -1064,18 +1064,18 @@ static const unsigned char *MUSIC_FILE[NMUSIC][2] = {
     {art_m_ride, art_m_ride_end}, {art_m_war, art_m_war_end}, {art_m_finale, art_m_finale_end},
 };
 /* the recorded noises (tools/make_sounds.py): a pond of ducks, a run of quacks,
- * single quacks, and a rubber bulb horn */
+ * single quacks, a rubber bulb horn, and a pane of glass breaking */
 ART(s_pond, "s_pond.ogg") ART(s_quacks, "s_quacks.ogg") ART(s_quack1, "s_quack1.ogg") ART(s_quack2, "s_quack2.ogg")
 ART(s_quack3, "s_quack3.ogg") ART(s_quack4, "s_quack4.ogg") ART(s_quack5, "s_quack5.ogg")
 ART(s_honk1, "s_honk1.ogg") ART(s_honk2, "s_honk2.ogg") ART(s_honk3, "s_honk3.ogg") ART(s_honk4, "s_honk4.ogg")
-ART(s_honk5, "s_honk5.ogg")
-enum { SM_POND, SM_QUACKS, SM_QUACK1, SM_QUACK5 = SM_QUACK1 + 4, SM_HONK1, SM_HONK2, SM_HONK3, SM_HONK4, SM_HONK5, NSAMPLE };
+ART(s_honk5, "s_honk5.ogg") ART(s_crash, "s_crash.ogg")
+enum { SM_POND, SM_QUACKS, SM_QUACK1, SM_QUACK5 = SM_QUACK1 + 4, SM_HONK1, SM_HONK2, SM_HONK3, SM_HONK4, SM_HONK5, SM_CRASH, NSAMPLE };
 static const unsigned char *SAMPLE_FILE[NSAMPLE][2] = {
     {art_s_pond, art_s_pond_end}, {art_s_quacks, art_s_quacks_end},
     {art_s_quack1, art_s_quack1_end}, {art_s_quack2, art_s_quack2_end}, {art_s_quack3, art_s_quack3_end},
     {art_s_quack4, art_s_quack4_end}, {art_s_quack5, art_s_quack5_end},
     {art_s_honk1, art_s_honk1_end}, {art_s_honk2, art_s_honk2_end}, {art_s_honk3, art_s_honk3_end},
-    {art_s_honk4, art_s_honk4_end}, {art_s_honk5, art_s_honk5_end},
+    {art_s_honk4, art_s_honk4_end}, {art_s_honk5, art_s_honk5_end}, {art_s_crash, art_s_crash_end},
 };
 static short *sample[NSAMPLE];
 static int sample_len[NSAMPLE];
@@ -1146,19 +1146,8 @@ static void mix_fx(float *buf, int len, int at, int kind)
     case FX_POND:
         add_sample(buf, len, at, SM_POND, 0.35);
         break;
-    case FX_CRASH:                                 /* glass: a burst, and then the pieces tinkling down */
-        for (int i = 0; i < RATE * 1.6 && at + i < len; i++) {
-            double t = (double)i / RATE, n = noise();
-            double v = (n - lp) * exp(-t * 7) * 0.8;
-            lp = n;
-            buf[at + i] += (float)v;
-        }
-        for (int k = 0; k < 26; k++) {
-            int s = at + (int)(RATE * (0.05 + frand() * 1.1));
-            double f = 2200 + frand() * 3800, a = 0.08 + frand() * 0.1;
-            for (int i = 0; i < RATE * 0.25 && s + i < len; i++)
-                buf[s + i] += (float)(a * sin(2 * M_PI * f * i / RATE) * exp(-(double)i / RATE * 22));
-        }
+    case FX_CRASH:                                 /* the mirror: a real pane of glass breaking */
+        add_sample(buf, len, at, SM_CRASH, 1.0);
         break;
     case FX_PUFF: case FX_BOOM: {                  /* a soft whoosh; a boom is bigger and lower */
         double d = kind == FX_BOOM ? 1.2 : 0.35, cut = kind == FX_BOOM ? 0.04 : 0.15, a = kind == FX_BOOM ? 1.4 : 0.5;
@@ -1482,7 +1471,9 @@ static void draw_mirror_room(int s, double t)
      * with the opening cut out, then everyone on the near side */
     MPose gp = g_at(t), hp = h_at(t), cp = mat(&Ck, t, C_WALK, 2, 0.06);
     for (int side = 1; side >= 0; side--) {
-        if (cp.pose >= 0 && (cp.x >= 0.5) == side) person(cp);
+        /* Chico stops in the doorway of the frame: there he is drawn on our side,
+         * so the threshold does not cut off his feet */
+        if (cp.pose >= 0 && (cp.x >= 0.58) == side) person(cp);
         flush(ren);
         for (int i = 0; i < nhat; i++) {
             const Flight *f = &hats[i];

@@ -20,3 +20,6 @@
 
 Done and liked: the room and mirror are better; the opener is good.
 - DONE: Opener: four ducks only, as in the film.
+- DONE: lemonade hats: no hats in the air, only quick cuts between hats in hands and on heads.
+- DONE: a real glass break for the mirror (CC0, OpenGameArt), layered deeper.
+- DONE: mirror gag: Chico's feet no longer cut off in the doorway.
