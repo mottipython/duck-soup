@@ -491,13 +491,17 @@ static void build_arrival(void)
     Key *hop = depth_key(key(f, 14.9, POLE, 0, SP_f_stand, 0, GLIDE), BACK, BACK_SZ);
     hop->arc = 0.08;
     depth(key(f, 15.25, 0.5, 0, SP_f_stand, 0, HOLD), BACK, BACK_SZ);
-    depth(key(f, 16.0, 0.5, 0, SP_f_brows, 0, HOLD), BACK, BACK_SZ);
-    depth(key(f, 17.0, 0.5, 0, CYCLE(CY_FIREFLY_T), 1, SLIDE), BACK, BACK_SZ);
-    at(f, 19.6, 0.44, SP_f_lean, 0);               /* he waits for himself, with everyone */
-    at(f, 21.6, 0.44, SP_f_point, 1);
-    at(f, 23.0, 0.44, SP_f_brows, 0);
-    at(f, 24.4, 0.44, SP_f_ash, 0);
-    go(f, 25.6, 0.44, CYCLE(CY_FIREFLY), 1, STRIDE);
+    /* then, as in the film, he goes and stands at the end of the line of guards, one
+     * of them, and looks up the stairs for himself with everybody else */
+    const double LX = 0.355, LF = 0.778, LS = 0.6;
+    depth(key(f, 15.7, 0.5, 0, CYCLE(CY_FIREFLY), 1, STRIDE), BACK, BACK_SZ);
+    depth(key(f, 17.6, LX, 0, SP_f_stand, 0, HOLD), LF, LS);
+    depth(key(f, 18.6, LX, 0, SP_f_lean, 0, HOLD), LF, LS);
+    depth(key(f, 20.0, LX, 0, SP_f_point, 0, HOLD), LF, LS);   /* up with the trumpets */
+    depth(key(f, 21.8, LX, 0, SP_f_lean, 0, HOLD), LF, LS);
+    depth(key(f, 23.0, LX, 0, SP_f_brows, 1, HOLD), LF, LS);
+    depth(key(f, 24.2, LX, 0, SP_f_ash, 1, HOLD), LF, LS);
+    depth(key(f, 25.2, LX, 0, CYCLE(CY_FIREFLY), 1, STRIDE), LF, LS);
     at(f, 27.2, 0.32, SP_f_bow, 1);                /* to her */
     at(f, 29.8, 0.32, SP_f_stand, 0);
     go(f, 30.4, 0.32, CYCLE(CY_FIREFLY), 0, STRIDE);
