@@ -511,13 +511,17 @@ static void build_arrival(void)
  * his again, faster and faster, till he is left bareheaded. A horn in his face, a
  * leg in his hand, and they are off. No music: there is none in the film. */
 static Actor *vendor_a, *chico_a, *harpo_a;
+#define HAT_SIZE 0.32
+#define HEAD 0.86                                 /* where a hat sits, in a figure's heights */
+/* a hat tossed from one head (at x0) to another (at x1): heights are a figure's,
+ * turned into the hat's own; it arcs just over their heads and tips a little */
 static void hat_flight(double t, double x0, double y0, double x1, double y1, int hat, double turns)
 {
-    Actor *h = actor(4, 0.86, 0.32);
+    Actor *h = actor(4, 0.88, HAT_SIZE);
     at(h, 0, x0, GONE, 0);
-    Key *k = key(h, t, x0, y0, hat, 0, GLIDE);
-    k->arc = 0.9; k->spin = turns;
-    key(h, t + 0.32, x1, y1, GONE, 0, HOLD);
+    Key *k = key(h, t, x0, y0 * HEAD / HAT_SIZE, hat, x1 < x0, GLIDE);
+    k->arc = 0.12 / HAT_SIZE; k->spin = turns * 0.06;
+    key(h, t + 0.3, x1, y1 * HEAD / HAT_SIZE, GONE, 0, HOLD);
 }
 static void build_lemonade(void)
 {
@@ -534,10 +538,10 @@ static void build_lemonade(void)
     double t = 7.0, dt = 0.62;
     for (int i = 0; i < 9; i++, t += dt, dt = fmax(0.3, dt * 0.88)) {
         if (i & 1) {
-            at(v, t, VX, SP_v_slam, 1); at(c, t, CX, SP_c_twohats, 0);
+            at(v, t + 0.3, VX, SP_v_slam, 1); at(c, t, CX, SP_c_twohats, 0);
             hat_flight(t, CX, 1.0, VX, 1.0, SP_p_boater, 1);
         } else {
-            at(v, t, VX, i % 4 ? SP_v_twohats : SP_v_grab, 1); at(c, t, CX, SP_c_hat_on, 0);
+            at(v, t, VX, i % 4 ? SP_v_twohats : SP_v_grab, 1); at(c, t + 0.3, CX, SP_c_hat_on, 0);
             hat_flight(t, VX, 1.0, CX, 1.0, SP_p_boater, -1);
         }
         at(h, t, HX, (i % 3 == 2) ? SP_h_tip : SP_h_bye, 0);

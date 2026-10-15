@@ -11,7 +11,7 @@
   vehicle on every frame (no jumps when the sidecar comes off), and no sudden swap
   where the picture changes from motorcycle-with-sidecar to the two separate pieces.
 - DONE: Sidecar: whoever rides the motorcycle (Harpo or Groucho) sits on the handlebars; put the rider on the saddle, astride the bike, hands on the grips.
-- Hats look sloppy (the hat shuffle at the lemonade stand, and elsewhere).
+- DONE: Hats look sloppy (the hat shuffle at the lemonade stand, and elsewhere).
 - DONE: Lemonade stand again: Harpo isn't really in the lemonade; he should stand in the tub.
 - DONE: Honks: need a deeper horn (pitch the recording down, or find a lower one).
 - War: the puff of smoke on each costume change looks wrong; find a better change.
