@@ -1696,21 +1696,26 @@ static void curtain(double open)          /* 0 closed, 1 drawn right back */
 /* the title on a card, let down on two ropes; `drop` 0 is up out of sight, 1 is down */
 static void placard(double drop, double bounce)
 {
-    double w = sw * 0.46, h = sh * 0.3, cx = sw / 2.0;
-    double y = -h - unit * 4 + (sh * 0.6 + h + unit * 4) * drop + bounce;   /* it hangs in front of the fire, below the ducks */
-    SDL_Color rope = col((Rgb){120, 90, 50}, 1), gold = col(GOLD, 1), ink = col(INK, 1);
+    /* the film's own title card, as it reads: "The FOUR MARX BROTHERS in DUCK SOUP,
+     * Directed by LEO McCAREY", in silver on black, hung up on ropes */
+    double w = sw * 0.56, h = sh * 0.40, cx = sw / 2.0;
+    double y = -h - unit * 4 + (sh * 0.53 + h + unit * 4) * drop + bounce;   /* it hangs in front of the fire, below the ducks */
+    SDL_Color rope = col((Rgb){120, 90, 50}, 1), gold = col(GOLD, 1);
+    SDL_Color silver = col((Rgb){226, 224, 216}, 1), grey = col((Rgb){170, 168, 164}, 1);
     line(cx - w * 0.3, 0, cx - w * 0.3, y, unit * 0.35, rope);
     line(cx + w * 0.3, 0, cx + w * 0.3, y, unit * 0.35, rope);
     rect(cx - w / 2 + unit * 0.6, y + unit * 0.8, w, h, col(INK, 0.5));          /* its shadow */
-    rect(cx - w / 2, y, w, h, col(PAPER, 1));
+    rect(cx - w / 2, y, w, h, col((Rgb){20, 19, 22}, 1));
+    disc(cx, y + h * 0.5, w * 0.42, col((Rgb){58, 56, 60}, 0.9), col((Rgb){20, 19, 22}, 0));   /* lit from the middle, as in the film */
     border(cx - w / 2 + unit, y + unit, cx + w / 2 - unit, y + h - unit, unit * 0.5, gold);
-    border(cx - w / 2 + unit * 2, y + unit * 2, cx + w / 2 - unit * 2, y + h - unit * 2, unit * 0.18, ink);
     for (int i = 0; i < 4; i++) disc(i & 1 ? cx + w / 2 - unit * 2 : cx - w / 2 + unit * 2, i & 2 ? y + h - unit * 2 : y + unit * 2, unit * 0.8, gold, gold);
     disc(cx - w * 0.3, y + unit * 0.6, unit * 0.6, gold, gold); disc(cx + w * 0.3, y + unit * 0.6, unit * 0.6, gold, gold);
     double s = h / 34;
-    text("THE FOUR MARX BROTHERS", cx, y + h * 0.17, s * 0.62, 0.9, ink);
-    text("IN", cx, y + h * 0.34, s * 0.62, 0.9, ink);
-    text("DUCK SOUP", cx, y + h * 0.53, s * 1.6, 1.15, col(RED, 1));
+    text("THE", cx, y + h * 0.065, s * 0.42, 0.9, silver);
+    text("FOUR MARX BROTHERS", cx, y + h * 0.19, s * 0.72, 1.0, silver);
+    text("IN", cx, y + h * 0.36, s * 0.32, 0.9, grey);
+    text("DUCK SOUP", cx, y + h * 0.445, s * 1.4, 1.1, silver);
+    text("DIRECTED BY LEO MCCAREY", cx, y + h * 0.785, s * 0.4, 0.9, grey);
     flush(ren);
 }
 
