@@ -15,7 +15,7 @@
 - DONE: Lemonade stand again: Harpo isn't really in the lemonade; he should stand in the tub.
 - DONE: Honks: the user picked a child's plastic bulb horn (CC0, OpenGameArt) played at 0.55 speed.
 - DONE: War: the puff of smoke on each costume change looks wrong; find a better change.
-- DONE: Harpo in bed with the horse ("GOOD NIGHT", after the ride).
+- DONE: Harpo in bed with the horse ("GOOD NIGHT", after the ride); redrawn clean-shaven, as himself (the first sheet had his Groucho disguise).
 - Later: re-release the Mirror Scene (v0.1.1) with the new room.
 
 Done and liked: the room and mirror are better; the opener is good.
