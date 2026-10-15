@@ -239,7 +239,7 @@ static const struct { int first, n; double stride, fps; } CYCLES[NCYCLE] = {
     [CY_CROCKETT] = {SP_u_r1, 4, 0, 10},
     [CY_DUCK] = {SP_d_b1, 4, 0, 5},
 };
-typedef struct { double t, x, y; int pose, flip, how; double arc, spin, fl, sz; } Key;   /* fl, sz: a floor and size of its own, or 0 */
+typedef struct { double t, x, y; int pose, flip, how; double arc, spin, fl, sz; int quick; } Key;   /* fl, sz: a floor and size of its own, or 0; quick: it comes in with a quick-change spin */
 typedef struct Actor Actor;
 struct Actor {
     Key k[128];
@@ -946,31 +946,33 @@ static void build_bed(void)
 
 /* ---- 8. The war ----
  * Groucho fights it in a new uniform every time we look. */
+static void change(Actor *f, double t, double x, int pose)
+{
+    key(f, t, x, 0, pose, 0, HOLD)->quick = 1;
+    sound(t - 0.12, FX_PUFF);
+}
 static void build_war(void)
 {
     begin(S_WAR, "THE WAR", SP_battlefield, 0.42, M_WAR);
-    Actor *f = actor(2, 0.92, 1.0), *puff = actor(3, 0.92, 1.1), *boom = actor(1, 0.62, 1.4);
+    /* every new uniform comes in with a quick spin, edge-on and round, and a whoosh */
+    Actor *f = actor(2, 0.92, 1.0), *boom = actor(1, 0.62, 1.4);
     const double FX_ = 0.3;
     static const int COSTUME[] = {SP_u_union, SP_u_confed, SP_u_redcoat, SP_u_scout, SP_u_crockett};
-    at(puff, 0, FX_, GONE, 0); at(boom, 0, 0.75, GONE, 0);
+    at(boom, 0, 0.75, GONE, 0);
     double t = 1.0;
     for (int i = 0; i < 5; i++, t += 2.8) {
-        at(f, t, FX_, COSTUME[i], 0);
-        if (i) { at(puff, t - 0.12, FX_, SP_p_puff, i & 1); at(puff, t + 0.35, FX_, GONE, 0); sound(t - 0.12, FX_PUFF); }
+        if (i) change(f, t, FX_, COSTUME[i]); else at(f, t, FX_, COSTUME[i], 0);
     }
     go(f, t, FX_, CYCLE(CY_CROCKETT), 0, SLIDE); at(f, t + 1.8, 0.62, SP_u_crockett, 0);
     go(f, t + 2.2, 0.62, CYCLE(CY_CROCKETT), 1, SLIDE); at(f, t + 4.0, FX_, SP_u_crockett, 0);
     t += 4.6;
-    at(puff, t - 0.12, FX_, SP_p_puff, 0); at(puff, t + 0.35, FX_, GONE, 0); sound(t - 0.12, FX_PUFF);
-    at(f, t, FX_, SP_u_napoleon, 0); t += 2.8;
-    at(puff, t - 0.12, FX_, SP_p_puff, 1); at(puff, t + 0.35, FX_, GONE, 0); sound(t - 0.12, FX_PUFF);
-    at(f, t, FX_, SP_u_ww1, 0);
+    change(f, t, FX_, SP_u_napoleon); t += 2.8;
+    change(f, t, FX_, SP_u_ww1);
     at(boom, t + 1.0, 0.72, SP_p_puff, 0); at(boom, t + 1.8, 0.72, GONE, 0); sound(t + 1.0, FX_BOOM);
     at(f, t + 1.05, FX_, SP_u_duck, 0);
     at(f, t + 2.6, FX_ + 0.03, SP_u_binoc, 0);
     t += 5.4;
-    at(puff, t - 0.12, FX_, SP_p_puff, 0); at(puff, t + 0.35, FX_, GONE, 0); sound(t - 0.12, FX_PUFF);
-    at(f, t, FX_, SP_u_general, 0); t += 2.6;
+    change(f, t, FX_, SP_u_general); t += 2.6;
     at(f, t, FX_, SP_u_salute, 0); t += 1.8;
     at(f, t, FX_, SP_u_grin, 0); t += 2.0;
     end(t + 0.6);
@@ -1305,6 +1307,20 @@ static void hips(int pose, double *hx, double *hy)
     else if (pose == SP_h_ride) { *hx = 0.30; *hy = 0.70; }
     else { *hx = 0.5; *hy = 0.55; }
 }
+/* A quick change: he turns edge-on, and round again in the new costume. How wide
+ * he is at t, 1 when not changing. */
+static double quick_change(const Actor *a, double t)
+{
+    const double Q = 0.18;
+    double edge = 1;
+    for (int i = 1; i < a->n; i++) {
+        const Key *k = &a->k[i];
+        if (!k->quick) continue;
+        if (t >= k->t - Q && t < k->t) edge = fmin(edge, (k->t - t) / Q);
+        if (t >= k->t && t < k->t + Q) edge = fmin(edge, (t - k->t) / Q);
+    }
+    return fmax(0.04, edge);
+}
 /* a vehicle on the move jolts over the road, and its riders with it */
 static double jolt(const Actor *a, double t)
 {
@@ -1338,9 +1354,11 @@ static void draw_actor(const Actor *a, double t, double tall)
     Look l = look(a, t);
     if (l.pose < 0) return;
     l.y += jolt(a, t);
+    double edge = quick_change(a, t);
     double x = rx0 + rw * l.x, feet = ry0 + rh * l.fl, size = tall * l.sz;
     double breathe = is_prop(l.pose) ? 0 : 0.006 * sin(anim_t * 2.6 + (a - act) * 1.7);
-    double sy = 1 - 0.07 * l.pop + breathe, sx = 1 + 0.05 * l.pop;
+    if (edge < 1) l.pop = 0;
+    double sy = 1 - 0.07 * l.pop + breathe, sx = (1 + 0.05 * l.pop) * edge;
     if (!is_prop(l.pose) || l.pose == SP_p_tub || l.pose == SP_p_moto || l.pose == SP_p_sidecar)
         if (!a->cut) shadow(x, feet, size * 0.22, 1 - fmin(l.y, 1));
     cut_y = a->cut > 0 ? ry0 + rh * a->cut : 0;
