@@ -270,6 +270,7 @@ static Key *key(Actor *a, double t, double x, double y, int pose, int flip, int 
 }
 /* a key's own depth: where its feet are and how big it is there */
 static void depth(Key *k, double fl, double sz) { k->fl = fl; k->sz = sz; }
+static Key *depth_key(Key *k, double fl, double sz) { depth(k, fl, sz); return k; }
 /* the commonest keys: still in a pose, and setting off for the next key's place */
 static void at(Actor *a, double t, double x, int pose, int flip) { key(a, t, x, 0, pose, flip, HOLD); }
 static void go(Actor *a, double t, double x, int pose, int flip, int how) { key(a, t, x, 0, pose, flip, how); }
@@ -451,14 +452,17 @@ static void build_arrival(void)
     }
     /* His Excellency, down the pole at the back of the hall and then down the aisle */
     const double BACK = 0.745, BACK_SZ = 0.55, FRONT = 0.93, FRONT_SZ = 1.2;
+    /* the pole in his drawing is left of its middle: set him so that it is on the
+     * hall's pole. He comes down fast, brakes with his hands, and steps off. */
+    const double POLE = 0.519;
     Actor *f = actor(3, FRONT, FRONT_SZ);
-    at(f, 0, 0.5, GONE, 0);
-    depth(key(f, 13.0, 0.5, 1.9, SP_f_pole, 0, FALL), BACK, BACK_SZ);
-    depth(key(f, 14.4, 0.5, 0.0, SP_f_land, 0, HOLD), BACK, BACK_SZ);
-    sound(14.4, FX_PUFF);
-    Actor *puff = actor(1, BACK + 0.01, 0.45);
-    at(puff, 0, 0.5, GONE, 0); at(puff, 14.4, 0.5, SP_p_puff, 0); at(puff, 15.0, 0.5, GONE, 0);
-    depth(key(f, 15.2, 0.5, 0, SP_f_stand, 0, HOLD), BACK, BACK_SZ);
+    at(f, 0, POLE, GONE, 0);
+    depth(key(f, 13.0, POLE, 2.2, SP_f_pole, 0, FALL), BACK, BACK_SZ);
+    depth(key(f, 13.75, POLE, 0.35, SP_f_pole, 0, GLIDE), BACK, BACK_SZ);
+    depth(key(f, 14.35, POLE, 0, SP_f_pole, 0, HOLD), BACK, BACK_SZ);
+    Key *hop = depth_key(key(f, 14.9, POLE, 0, SP_f_stand, 0, GLIDE), BACK, BACK_SZ);
+    hop->arc = 0.08;
+    depth(key(f, 15.25, 0.5, 0, SP_f_stand, 0, HOLD), BACK, BACK_SZ);
     depth(key(f, 16.0, 0.5, 0, SP_f_brows, 0, HOLD), BACK, BACK_SZ);
     depth(key(f, 17.0, 0.5, 0, CYCLE(CY_FIREFLY_T), 1, SLIDE), BACK, BACK_SZ);
     at(f, 19.6, 0.44, SP_f_lean, 0);               /* he waits for himself, with everyone */
