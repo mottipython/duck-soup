@@ -6,8 +6,8 @@
     (public domain), given the same old-record sound as the rest of the music;
   - ducks: a pond of Pekin ducks and mallards quacking, and a mallard's
     "QUACK quack quack quack", cut into single quacks (CC BY-SA);
-  - the horn: a bread seller's rubber bulb horn from Orizaba, Veracruz, cut into
-    single honks (CC BY-SA).
+  - the horn: a child's plastic bulb horn (CC0, AntumDeluge on OpenGameArt),
+    played slower and deeper, cut into single honks.
 
     tools/make_sounds.py SOUNDS_DIR
 
@@ -18,10 +18,10 @@ import os, subprocess, sys
 OUT = "assets/art"
 OLD_RECORD = ("highpass=f=140,lowpass=f=4200,equalizer=f=1800:t=q:w=1:g=3,"
               "acompressor=threshold=-22dB:ratio=3:attack=10:release=200,loudnorm=I=-18:TP=-2:LRA=9")
-# the horn is a small one: played at DEEP of its speed it is a big brass bulb horn
-DEEP = 0.62
-HONK = (f"highpass=f=120,asetrate={22050 * DEEP:.0f},aresample=22050,"
-        "equalizer=f=220:t=q:w=1:g=5,equalizer=f=3000:t=q:w=1:g=-4")
+# the horn is a child's plastic bulb horn: played at DEEP of its speed, a big one
+DEEP = 0.55
+HONK = (f"highpass=f=100,asetrate={22050 * DEEP:.0f},aresample=22050,"
+        "equalizer=f=300:t=q:w=1:g=5")
 # name: recording, start, end (seconds), and how it is evened out
 CUTS = {
     "s_pond": ("ducks-pekin-and-mallard.ogg", 64.0, 80.5, "highpass=f=250"),
@@ -31,9 +31,9 @@ CUTS = {
     "s_quack3": ("ducks-mallard-female.mp3", 7.63, 7.92, "highpass=f=200"),
     "s_quack4": ("ducks-pekin-and-mallard.ogg", 65.0, 65.42, "highpass=f=300"),
     "s_quack5": ("ducks-pekin-and-mallard.ogg", 79.15, 79.80, "highpass=f=300"),
-    "s_honk1": ("horn-bocina-del-panadero.ogg", 0.42, 0.68, HONK),
-    "s_honk2": ("horn-bocina-del-panadero.ogg", 2.04, 2.32, HONK),
-    "s_honk3": ("horn-bocina-del-panadero.ogg", 3.56, 4.30, HONK),   # a double honk
+    "s_honk1": ("oga-bicycle-horn/bicycle-horn-1.wav", 0.01, 0.27, HONK),   # squeeze and let go
+    "s_honk2": ("oga-bicycle-horn/bicycle-horn-1.wav", 0.29, 0.57, HONK),
+    "s_honk3": ("oga-bicycle-horn/bicycle-horn-1.wav", 0.0, 0.60, HONK),    # a double honk
 }
 
 def main(src):
