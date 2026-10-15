@@ -1,5 +1,5 @@
 # Duck Soup - a cartoon screensaver of the sight gags from Duck Soup (1933)
-VERSION  := 1.0.0
+VERSION  := 1.1.0
 PREFIX   ?= /usr
 SYSCONFDIR ?= /etc
 DESTDIR  ?=

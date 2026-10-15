@@ -6,3 +6,4 @@ Exec=duck-soup
 TryExec=duck-soup
 X-Screensaver-Standalone=true
 X-Screensaver-Snapshot=duck-soup --snapshot %o --size %wx%h --time 30 --mute
+X-Screensaver-Settings=duck-soup --settings
