@@ -1514,45 +1514,124 @@ static void old_film(void)
 }
 
 /* ---- the curtain and the title ---- */
-static const Rgb VELVET = {150, 22, 30}, VELVET_DARK = {70, 8, 14};
-static void quadc(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3,
-                  SDL_Color c0, SDL_Color c1, SDL_Color c2, SDL_Color c3)
+/* Stage curtains of red velvet. Each half hangs in folds from the rail and, as it is
+ * drawn back, is gathered into a gold tie-back so that it pinches in like an
+ * hourglass; above them a pelmet of swags with gold braid and tassels. All drawn
+ * as shaded meshes, with an ink line on the edges as in the pictures. */
+static SDL_Color velvet(double c, double shade)
 {
-    vb_need(4, 6);
-    int b = nv;
-    vert(x0, y0, c0); vert(x1, y1, c1); vert(x2, y2, c2); vert(x3, y3, c3);
-    ib[ni++] = b; ib[ni++] = b + 1; ib[ni++] = b + 2; ib[ni++] = b; ib[ni++] = b + 2; ib[ni++] = b + 3;
+    static const Rgb D = {58, 6, 12}, M = {150, 20, 30}, H = {226, 84, 78};
+    double h = pow(fmax(c, 0), 9) * 0.75;
+    double r = (D.r + (M.r - D.r) * c) * (1 - h) + H.r * h, g = (D.g + (M.g - D.g) * c) * (1 - h) + H.g * h,
+           b = (D.b + (M.b - D.b) * c) * (1 - h) + H.b * h;
+    SDL_Color o = {(Uint8)(r * shade), (Uint8)(g * shade), (Uint8)(b * shade), 255};
+    return o;
 }
-/* One half of a stage curtain, hanging from the top, `width` wide from its outer
- * edge; as it is drawn back its folds bunch up. */
-static void curtain_half(int left, double width)
+static double rail_y(void) { return sh * 0.10; }
+static void tassel(double x, double y, double s)
 {
-    int folds = 9;
-    double fw = width / folds, sway = sin(anim_t * 1.3 + left) * unit * 0.3;
-    for (int i = 0; i < folds; i++) {
-        double xa = left ? i * fw : sw - (i + 1) * fw, xb = xa + fw, xm = (xa + xb) / 2;
-        double bx = (left ? 1 : -1) * sway * i / folds;
-        SDL_Color dark = col(VELVET_DARK, 1), lit = col(VELVET, 1);
-        quadc(xa, 0, xm, 0, xm + bx, sh, xa + bx, sh, dark, lit, lit, dark);
-        quadc(xm, 0, xb, 0, xb + bx, sh, xm + bx, sh, lit, dark, dark, lit);
+    SDL_Color gold = col(GOLD, 1), dark = col((Rgb){120, 84, 30}, 1), ink = col(INK, 1);
+    line(x, y, x, y + s * 0.9, s * 0.16, gold);
+    disc(x, y + s * 1.0, s * 0.32, gold, dark);
+    vb_need(3, 3);
+    int k = nv;
+    vert(x - s * 0.18, y + s * 1.15, gold); vert(x + s * 0.18, y + s * 1.15, gold); vert(x, y + s * 1.15, dark);
+    nv = k;                                       /* (the skirt is drawn as strands instead) */
+    for (int i = -3; i <= 3; i++) line(x + i * s * 0.06, y + s * 1.15, x + i * s * 0.11, y + s * 2.0, s * 0.07, i & 1 ? dark : gold);
+    line(x - s * 0.34, y + s * 1.12, x + s * 0.34, y + s * 1.12, s * 0.06, ink);
+}
+static void curtain_half(int left, double g)
+{
+    const int F = 9, NU = F * 10, NV = 26;
+    double top = rail_y(), yt = sh * 0.64, half = sw / 2.0 + unit;
+    double wt = half * (1 - 0.80 * g), wtie = half * (1 - 0.93 * g), wb = half * (1 - 0.82 * g);
+    double sway = sin(anim_t * 1.1 + left * 2) * unit * 0.5;
+    /* how wide the half is at height y, and where its bottom hem is at u */
+    #define CW(y) ((y) < yt ? wtie + (wt - wtie) * pow((yt - (y)) / (yt - top), 2) \
+                            : wtie + (wb - wtie) * pow(((y) - yt) / (sh - yt), 1.3))
+    double px[NV + 1][NU + 1], py[NV + 1][NU + 1];
+    for (int j = 0; j <= NV; j++)
+        for (int i = 0; i <= NU; i++) {
+            double u = (double)i / NU, y = top + (sh + unit - top) * j / NV;
+            double hem = j == NV ? unit * 0.9 * (1 - cos(2 * M_PI * u * F)) : 0;
+            double w = CW(y), d = u * w + sway * pow((y - top) / (sh - top), 2) * u;
+            px[j][i] = left ? d : sw - d;
+            py[j][i] = y - hem;
+        }
+    vb_need((NU + 1) * (NV + 1), NU * NV * 6);
+    int base = nv;
+    for (int j = 0; j <= NV; j++)
+        for (int i = 0; i <= NU; i++) {
+            double u = (double)i / NU, y = py[j][i];
+            double c = 0.5 + 0.5 * cos(2 * M_PI * u * F + (left ? 0 : M_PI));
+            double pinch = 1 - 0.35 * g * exp(-pow((y - yt) / (sh * 0.12), 2));     /* crushed at the tie */
+            double shade = (0.55 + 0.45 * ramp(y, top, top + sh * 0.12)) * pinch * (0.8 + 0.2 * u);
+            vert(px[j][i], y, velvet(c, shade));
+        }
+    for (int j = 0; j < NV; j++)
+        for (int i = 0; i < NU; i++) {
+            int a = base + j * (NU + 1) + i, b = a + 1, c = a + NU + 1, d = c + 1;
+            ib[ni++] = a; ib[ni++] = b; ib[ni++] = d; ib[ni++] = a; ib[ni++] = d; ib[ni++] = c;
+        }
+    /* the gold fringe along the hem, and the ink line down the inner edge */
+    for (int i = 0; i < NU; i++) {
+        double x = px[NV][i], y = py[NV][i];
+        line(x, y - unit * 0.3, x, y + unit * 0.9, unit * 0.22, col(i & 1 ? GOLD : (Rgb){150, 108, 40}, 1));
     }
-    /* the gold fringe along its foot */
-    double x0 = left ? 0 : sw - width;
-    rect(x0, sh - unit * 1.6, width, unit * 1.6, col(GOLD, 1));
-    for (double x = x0; x < x0 + width; x += unit * 0.7) line(x, sh - unit * 1.6, x, sh - unit * 0.2, unit * 0.18, col((Rgb){150, 110, 40}, 1));
+    for (int i = 0; i < NU; i++) line(px[NV][i], py[NV][i] - unit * 0.3, px[NV][i + 1], py[NV][i + 1] - unit * 0.3, unit * 0.45, col(GOLD, 1));
+    for (int j = 0; j < NV; j++) line(px[j][NU], py[j][NU], px[j + 1][NU], py[j + 1][NU], unit * 0.35, col(INK, 1));
+    /* the tie-back: a gold rope round the gathered cloth, a tassel hanging from it */
+    if (g > 0.75) {
+        double xo = left ? 0 : sw, xi = left ? wtie + unit * 0.4 : sw - wtie - unit * 0.4;
+        double a = ramp(g, 0.75, 0.95);
+        SDL_Color gold = col(GOLD, a), dark = col((Rgb){130, 92, 34}, a);
+        for (int k = 0; k < 2; k++) line(xo, yt - unit * 1.2 + k * unit * 1.1, xi, yt - unit * 0.6 + k * unit * 0.9, unit * 0.7, k ? dark : gold);
+        if (a > 0.5) tassel(xi, yt, unit * 3.2);
+    }
+    #undef CW
     flush(ren);
 }
 static void curtain(double open)          /* 0 closed, 1 drawn right back */
 {
-    double half = sw / 2.0 * (1 - 0.86 * ease(open)) + unit;
-    curtain_half(1, half);
-    curtain_half(0, half);
-    /* the pelmet across the top, with its scallops and tassels */
-    double ph = sh * 0.11;
-    rect(0, 0, sw, ph, col(VELVET_DARK, 1));
-    for (double x = 0; x < sw + unit * 6; x += unit * 6) disc(x + unit * 3, ph, unit * 3.1, col(VELVET_DARK, 1), col(VELVET_DARK, 1));
-    rect(0, ph - unit * 0.6, sw, unit * 0.6, col(GOLD, 1));
-    for (double x = 0; x < sw + unit * 6; x += unit * 6) disc(x + unit * 3, ph + unit * 3.4, unit * 0.55, col(GOLD, 1), col(GOLD, 1));
+    double g = ease(open);
+    curtain_half(1, g);
+    curtain_half(0, g);
+    /* the pelmet: a band of velvet along the rail, and swags hanging from it */
+    double band = rail_y() * 0.62, drop = rail_y() * 0.95;
+    const int NSWAG = 5, NU = 40, NV = 8;
+    for (int s = 0; s < NSWAG; s++) {
+        double x0 = sw * (s - 0.08) / NSWAG, x1 = sw * (s + 1.08) / NSWAG;
+        vb_need((NU + 1) * (NV + 1), NU * NV * 6);
+        int base = nv;
+        for (int j = 0; j <= NV; j++)
+            for (int i = 0; i <= NU; i++) {
+                double u = (double)i / NU, v = (double)j / NV, sag = sin(M_PI * u);
+                double y = band * 0.5 + (band * 0.5 + drop * sag) * v;
+                double c = 0.5 + 0.5 * cos(v * 3.2 * M_PI + 0.4);
+                vert(x0 + (x1 - x0) * u, y, velvet(c, 0.75 + 0.25 * sag));
+            }
+        for (int j = 0; j < NV; j++)
+            for (int i = 0; i < NU; i++) {
+                int a = base + j * (NU + 1) + i, b = a + 1, c = a + NU + 1, d = c + 1;
+                ib[ni++] = a; ib[ni++] = b; ib[ni++] = d; ib[ni++] = a; ib[ni++] = d; ib[ni++] = c;
+            }
+        for (int i = 0; i < NU; i++) {             /* the braid along its lower edge */
+            double u0 = (double)i / NU, u1 = (double)(i + 1) / NU;
+            double ax = x0 + (x1 - x0) * u0, ay = band + drop * sin(M_PI * u0), bx = x0 + (x1 - x0) * u1, by = band + drop * sin(M_PI * u1);
+            line(ax, ay, bx, by, unit * 0.9, col(INK, 1));
+            line(ax, ay - unit * 0.1, bx, by - unit * 0.1, unit * 0.55, col(GOLD, 1));
+        }
+    }
+    /* the band itself, over the tops of the swags, with gold piping */
+    for (int i = 0; i < 60; i++) {
+        double x = sw * i / 60.0, c = 0.5 + 0.5 * cos(i * 0.9);
+        SDL_Color v = velvet(0.35 + 0.3 * c, 0.8);
+        rect(x, 0, sw / 60.0 + 1, band, v);
+    }
+    line(0, band, sw, band, unit * 0.9, col(INK, 1));
+    line(0, band - unit * 0.1, sw, band - unit * 0.1, unit * 0.5, col(GOLD, 1));
+    flush(ren);
+    for (int s = 0; s <= NSWAG; s++) tassel(sw * (s - 0.0) / NSWAG, band, unit * 2.6);
     flush(ren);
 }
 /* the title on a card, let down on two ropes; `drop` 0 is up out of sight, 1 is down */
@@ -1583,6 +1662,16 @@ static void draw_stage(int s, double t)
     const Scene *sc = &scene[s];
     if (scene[s].kind == S_RADIO || scene[s].kind == S_MIRROR) { draw_mirror_room(s, t); draw_bubbles(s, t, 0, 1); return; }
     backdrop(sc->bg, ramp(t, 0, sc->len));
+    if (sc->kind == S_OPENER && cur_tex && cur_tex[sc->bg]) {
+        /* the pot sits low on the stage: the picture goes down, its plain dark top
+         * drawn out above it, and the logs run off the bottom */
+        double drop = rh * 0.16;
+        SDL_Rect top = {0, 0, sprite[sc->bg].w, sprite[sc->bg].h / 50};
+        SDL_FRect d = {(float)rx0, (float)ry0, (float)rw, (float)(drop + 2)}, all = {(float)rx0, (float)(ry0 + drop), (float)rw, (float)rh};
+        SDL_RenderCopyF(ren, cur_tex[sc->bg], &top, &d);
+        SDL_RenderCopyF(ren, cur_tex[sc->bg], NULL, &all);
+        ry0 += drop;
+    }
     double tall = rh * sc->tall;
     if (sc->kind == S_RIDE) {                       /* the window he stops at: lit, or dark */
         double x0 = rx0 + rw * WINDOW[0], y0 = ry0 + rh * WINDOW[1], x1 = rx0 + rw * WINDOW[2], y1 = ry0 + rh * WINDOW[3];
