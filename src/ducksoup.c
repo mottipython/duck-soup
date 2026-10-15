@@ -585,8 +585,11 @@ static void build_sidecar_bit(int which)
      * it, the sidecar on its own (it is on our side of the motorcycle), the passenger
      * down in the sidecar, and the exhaust. The two of them ride: they go where the
      * motorcycle and the sidecar go, and sit in their seats. */
-    Actor *moto = actor(1, 0.88, 1.45), *side = actor(3, 0.88, 1.45);
-    Actor *gr = actor(which == 1 ? 2 : 4, 0.86, 1.0), *hr = actor(which == 1 ? 4 : 2, 0.86, 1.0);
+    /* the rider is drawn behind the motorcycle, so its tank and engine hide his legs
+     * as they would a man astride it: we see him from his far side, his near leg
+     * the bike's own business */
+    Actor *moto = actor(2, 0.88, 1.45), *side = actor(3, 0.88, 1.45);
+    Actor *gr = actor(which == 1 ? 1 : 4, 0.86, 1.0), *hr = actor(which == 1 ? 4 : 1, 0.86, 1.0);
     Actor *puff = actor(5, 0.88, 0.7);
     at(puff, 0, MX, GONE, 0);
     if (which == 2) {                               /* the sidecar by itself, honking */
@@ -1295,11 +1298,11 @@ static int is_prop(int pose) { return pose >= SP_p_boater && pose <= SP_p_tyrol;
 /* an actor of the current scene, at scene time t */
 /* Where a seat is in a vehicle's picture (across and down, facing right), and where
  * a rider's hips are in his: so that he sits in it, not by it */
-static double RIDE_FX = 0.30, RIDE_FY = 0.33, SEAT_FX = 0.36, SEAT_FY = 0.42, SEAT_RIM = 0.30;
+static double RIDE_FX = 0.31, RIDE_FY = 0.36, RIDE_CUT = 0.62, SEAT_FX = 0.36, SEAT_FY = 0.52, SEAT_RIM = 0.30;
 static int seat_at(int vehicle, int seat, double *fx, double *fy, double *rim)
 {
     *rim = 0;
-    if (vehicle == SP_p_moto && seat == RIDER) { *fx = RIDE_FX; *fy = RIDE_FY; }      /* the saddle */
+    if (vehicle == SP_p_moto && seat == RIDER) { *fx = RIDE_FX; *fy = RIDE_FY; *rim = RIDE_CUT; }   /* the saddle */
     else if (vehicle == SP_p_sidecar && seat == PASSENGER) { *fx = SEAT_FX; *fy = SEAT_FY; *rim = SEAT_RIM; }
     else return 0;
     return 1;
