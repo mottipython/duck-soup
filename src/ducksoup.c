@@ -549,7 +549,7 @@ static void build_lemonade(void)
 static void build_sidecar_bit(int which)
 {
     begin(S_SIDECAR, NULL, SP_garden, 0.40, M_SIDECAR);
-    const double MX = 0.47;
+    const double MX = 0.50, SIDE_OFF = -0.075;
     /* back to front: the motorcycle (with the sidecar on it, or not), its rider astride
      * it, the sidecar on its own (it is on our side of the motorcycle), the passenger
      * down in the sidecar, and the exhaust. The two of them ride: they go where the
@@ -569,24 +569,46 @@ static void build_sidecar_bit(int which)
         cur->iris_x = 0.2; cur->iris_y = 0.66;
         return;
     }
+    /* They come in as one machine, the sidecar bolted to our side of the motorcycle,
+     * slowing to a stop with a dip on the springs; then a bang, and one half goes on
+     * without the other, wobbling off in a trail of exhaust. The two halves are drawn
+     * apart from the start, so nothing changes but where they go. */
     Actor *ra = which ? gr : hr, *pa = which ? hr : gr;
     ra->ride0 = moto; ra->seat = RIDER;
-    pa->ride0 = moto; pa->ride1 = side; pa->ride_at = 3.2; pa->seat = PASSENGER;
+    pa->ride0 = side; pa->seat = PASSENGER;
     at(ra, 0, 0, which ? SP_f_sit : SP_h_ride, 0);
     at(pa, 0, 0, which ? SP_h_ride : SP_f_sit, 0);
-    at(side, 0, MX, GONE, 0);
-    go(moto, 0.2, -0.45, SP_p_motoside, 0, GLIDE); at(moto, 2.0, MX, SP_p_motoside, 0);
-    at(puff, 2.8, MX - 0.27, SP_p_puff, 1); at(puff, 3.3, MX - 0.27, GONE, 0); sound(2.8, FX_PUFF);
-    at(moto, 3.2, MX, SP_p_moto, 0); at(side, 3.2, MX - 0.035, SP_p_sidecar, 0);
-    if (which == 0) {                               /* off goes the motorcycle */
-        go(moto, 3.4, MX, SP_p_moto, 0, FALL); at(moto, 4.6, 1.4, GONE, 0);
-        at(gr, 4.8, 0, SP_f_situp, 0);
-        at(gr, 6.4, 0, SP_f_sit, 0);
-    } else {                                        /* off goes the sidecar */
-        go(side, 3.4, MX - 0.035, SP_p_sidecar, 0, FALL); at(side, 4.6, 1.4, GONE, 0);
-        at(gr, 4.8, 0, SP_f_situp, 0);
-        at(gr, 6.4, 0, SP_f_sit, 0);
+    const double SX = MX + SIDE_OFF;                /* where the sidecar is, bolted on */
+    for (int i = 0; i < 2; i++) {
+        Actor *v = i ? side : moto;
+        int pose = i ? SP_p_sidecar : SP_p_moto;
+        double x = i ? SX : MX;
+        go(v, 0.2, x - 0.92, pose, 0, GLIDE);
+        key(v, 2.2, x, -0.012, pose, 0, GLIDE);     /* the stop: down on the springs, and up */
+        key(v, 2.42, x, 0.010, pose, 0, GLIDE);
+        key(v, 2.6, x, 0, pose, 0, HOLD);
     }
+    at(puff, 2.9, (MX + SX) / 2, SP_p_puff, 1); at(puff, 3.3, (MX + SX) / 2, GONE, 0); sound(2.9, FX_PUFF);
+    Actor *goes = which ? side : moto, *stays = which ? moto : side;
+    double gx = which ? SX : MX;
+    (void)stays;
+    /* off it goes: a lurch forward, then away, bobbing over the road */
+    key(goes, 3.25, gx, 0, which ? SP_p_sidecar : SP_p_moto, 0, GLIDE);
+    key(goes, 3.45, gx + 0.03, 0.02, which ? SP_p_sidecar : SP_p_moto, 0, FALL);
+    key(goes, 4.7, gx + 1.0, 0, which ? SP_p_sidecar : SP_p_moto, 0, HOLD);
+    at(goes, 4.75, 1.6, GONE, 0);
+    if (which == 0)                                 /* the motorcycle leaves its exhaust behind */
+        for (int i = 0; i < 5; i++) {
+            double t0 = 3.3 + i * 0.2, f = ramp(t0, 3.45, 4.7), x = gx + 0.03 + 0.97 * f * f - 0.14;
+            Actor *e = actor(0, 0.84, 0.3);
+            at(e, 0, x, GONE, 0);
+            depth(key(e, t0, x, 0.05, SP_p_puff, i & 1, SLIDE), 0.84, 0.22);
+            depth(key(e, t0 + 0.7, x - 0.04, 0.3, SP_p_puff, i & 1, HOLD), 0.84, 0.55);
+            at(e, t0 + 0.75, x, GONE, 0);
+        }
+    if (which == 0) sound(3.4, FX_PUFF);
+    at(gr, 4.8, 0, SP_f_situp, 0);
+    at(gr, 6.4, 0, SP_f_sit, 0);
     cur->music_stop = 8.2;
     end(8.2);
     cur->iris_x = which ? MX : MX - 0.08; cur->iris_y = 0.6;
@@ -1226,13 +1248,12 @@ static int is_prop(int pose) { return pose >= SP_p_boater && pose <= SP_p_tyrol;
 /* an actor of the current scene, at scene time t */
 /* Where a seat is in a vehicle's picture (across and down, facing right), and where
  * a rider's hips are in his: so that he sits in it, not by it */
+static double RIDE_FX = 0.30, RIDE_FY = 0.33, SEAT_FX = 0.36, SEAT_FY = 0.42, SEAT_RIM = 0.30;
 static int seat_at(int vehicle, int seat, double *fx, double *fy, double *rim)
 {
     *rim = 0;
-    if (vehicle == SP_p_motoside) {
-        if (seat == RIDER) { *fx = 0.47; *fy = 0.36; } else { *fx = 0.27; *fy = 0.60; *rim = 0.47; }
-    } else if (vehicle == SP_p_moto && seat == RIDER) { *fx = 0.42; *fy = 0.36; }
-    else if (vehicle == SP_p_sidecar && seat == PASSENGER) { *fx = 0.30; *fy = 0.60; *rim = 0.47; }
+    if (vehicle == SP_p_moto && seat == RIDER) { *fx = RIDE_FX; *fy = RIDE_FY; }      /* the saddle */
+    else if (vehicle == SP_p_sidecar && seat == PASSENGER) { *fx = SEAT_FX; *fy = SEAT_FY; *rim = SEAT_RIM; }
     else return 0;
     return 1;
 }
@@ -1243,11 +1264,20 @@ static void hips(int pose, double *hx, double *hy)
     else if (pose == SP_h_ride) { *hx = 0.30; *hy = 0.70; }
     else { *hx = 0.5; *hy = 0.55; }
 }
+/* a vehicle on the move jolts over the road, and its riders with it */
+static double jolt(const Actor *a, double t)
+{
+    Look l = look(a, t), p = look(a, t - 0.05);
+    if (l.pose != SP_p_moto && l.pose != SP_p_sidecar) return 0;
+    double v = fabs(l.x - p.x);
+    return 0.012 * fmin(1, v * 60) * sin(t * 34 + (a - act) * 2.1);
+}
 static void draw_rider(const Actor *a, double t, double tall)
 {
     const Actor *v = a->ride1 && t >= a->ride_at ? a->ride1 : a->ride0;
     Look vl = look(v, t), l = look(a, t);
     if (vl.pose < 0 || l.pose < 0) return;
+    vl.y += jolt(v, t - 0.03);
     double fx, fy, rim, hx, hy;
     if (!seat_at(vl.pose, a->seat, &fx, &fy, &rim)) return;
     if (vl.flip) fx = 1 - fx;
@@ -1266,10 +1296,11 @@ static void draw_actor(const Actor *a, double t, double tall)
     if (a->ride0) { draw_rider(a, t, tall); return; }
     Look l = look(a, t);
     if (l.pose < 0) return;
+    l.y += jolt(a, t);
     double x = rx0 + rw * l.x, feet = ry0 + rh * l.fl, size = tall * l.sz;
     double breathe = is_prop(l.pose) ? 0 : 0.006 * sin(anim_t * 2.6 + (a - act) * 1.7);
     double sy = 1 - 0.07 * l.pop + breathe, sx = 1 + 0.05 * l.pop;
-    if (!is_prop(l.pose) || l.pose == SP_p_tub || l.pose == SP_p_moto || l.pose == SP_p_motoside || l.pose == SP_p_sidecar)
+    if (!is_prop(l.pose) || l.pose == SP_p_tub || l.pose == SP_p_moto || l.pose == SP_p_sidecar)
         if (!a->cut) shadow(x, feet, size * 0.22, 1 - fmin(l.y, 1));
     cut_y = a->cut > 0 ? ry0 + rh * a->cut : 0;
     figure(l.pose, x, feet - l.y * size, size, l.flip, a->alpha, sx, sy, l.spin);
