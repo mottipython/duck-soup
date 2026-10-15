@@ -9,7 +9,7 @@
   a trail of exhaust instead of snapping off, keep both riders moving with their
   vehicle on every frame (no jumps when the sidecar comes off), and no sudden swap
   where the picture changes from motorcycle-with-sidecar to the two separate pieces.
-- Sidecar: Harpo sits on the handlebars, not on the seat; move him back onto the saddle.
+- Sidecar: whoever rides the motorcycle (Harpo or Groucho) sits on the handlebars; put the rider on the saddle, astride the bike, hands on the grips.
 - Hats look sloppy (the hat shuffle at the lemonade stand, and elsewhere).
 - Lemonade stand again: Harpo isn't really in the lemonade; he should stand in the tub.
 - Honks: need a deeper horn (pitch the recording down, or find a lower one).
