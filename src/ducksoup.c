@@ -650,6 +650,7 @@ static void build_sidecar_bit(int which)
 
 /* ---- 4. The lemonade stand again ----
  * Harpo paddles in the lemonade, and sets the seller's hat alight. */
+static Actor *in_tub[2];       /* whoever is down in the lemonade: drawn with its surface round them */
 static void build_lemonade2(void)
 {
     begin(S_LEMONADE2, "THE LEMONADE STAND AGAIN", SP_street, 0.40, M_NONE);
@@ -660,6 +661,7 @@ static void build_lemonade2(void)
     Actor *v = actor(2, 0.88, 1.0), *h = actor(2, 0.885, 1.0), *tub = actor(3, 0.9, 0.62);
     Actor *hin = actor(4, 0.89, 1.0), *vin = actor(4, 0.89, 1.0);
     hin->cut = vin->cut = LIQUID;
+    in_tub[0] = hin; in_tub[1] = vin;
     at(tub, 0, TX, SP_p_tub, 0);
     at(hin, 0, TX, GONE, 0); at(vin, 0, TX, GONE, 0);
     at(v, 0, VX, SP_v_wipe, 1);
@@ -1728,6 +1730,53 @@ static void placard(double drop, double bounce)
 
 /* ---- one scene ---- */
 static int draw_order[MAXACT];
+/* the near half of an ellipse (below its middle), and the near half of a ring */
+static void half_ellipse(double cx, double cy, double rx, double ry, SDL_Color c)
+{
+    int n = 24;
+    vb_need(n + 2, 3 * n);
+    int b = nv;
+    vert(cx, cy, c);
+    for (int i = 0; i <= n; i++) vert(cx + rx * cos(i * M_PI / n), cy + ry * sin(i * M_PI / n), c);
+    for (int i = 0; i < n; i++) { ib[ni++] = b; ib[ni++] = b + 1 + i; ib[ni++] = b + 2 + i; }
+}
+static void half_ring(double cx, double cy, double rx, double ry, double w, SDL_Color c)
+{
+    int n = 24;
+    for (int i = 0; i < n; i++) {
+        double a0 = i * M_PI / n, a1 = (i + 1) * M_PI / n;
+        line(cx + rx * cos(a0), cy + ry * sin(a0), cx + rx * cos(a1), cy + ry * sin(a1), w, c);
+    }
+}
+/* The lemonade round the legs of whoever is in the tub: a collar of it in front of
+ * where he goes in, rings spreading out as he paddles, and splashes */
+static void lemonade_surface(double t, double tall)
+{
+    const Rgb LEMON = {240, 208, 78}, PALE = {255, 240, 160};
+    for (int i = 0; i < 2; i++) {
+        const Actor *a = in_tub[i];
+        if (!a) continue;
+        Look l = look(a, t);
+        if (l.pose < 0) continue;
+        double x = rx0 + rw * l.x, y = ry0 + rh * a->cut, r = tall * l.sz * 0.12;
+        for (int k = 0; k < 2; k++) {               /* rings spreading out */
+            double q = fmod(t * 2 + k * 0.5, 1.0);
+            half_ring(x, y, r * (1.1 + q * 0.9), r * 0.26 * (1.1 + q * 0.9), unit * 0.2, col(PALE, 0.85 * (1 - q)));
+        }
+        half_ellipse(x, y - 1, r, r * 0.26, col(LEMON, 1));
+        half_ring(x, y - 1, r, r * 0.26, unit * 0.22, col(PALE, 1));
+        line(x - r, y - 1, x + r, y - 1, unit * 0.25, col(PALE, 0.9));
+        double q = fmod(t * 2 + 0.2, 1.0);
+        if (q < 0.45)
+            for (int k = 0; k < 6; k++) {           /* splashes, each time a foot comes down */
+                double ang = (k + 0.5) / 6 * M_PI, v = r * (0.9 + 0.4 * (k & 1));
+                double dx = -cos(ang) * v * q * 2.2, dy = -sin(ang) * v * q * 3.0 + r * 9 * q * q;
+                disc(x + dx, y + dy, unit * 0.32 * (1 - q), col(PALE, 1), col(LEMON, 1));
+            }
+    }
+    flush(ren);
+}
+
 static void draw_stage(int s, double t)
 {
     const Scene *sc = &scene[s];
@@ -1760,6 +1809,7 @@ static void draw_stage(int s, double t)
         }
     for (int i = 0; i < n; i++) draw_actor(&act[draw_order[i]], t, tall);
     flush(ren);
+    if (sc->kind == S_LEMONADE2) lemonade_surface(t, tall);
     if (sc->kind == S_RIDE || sc->kind == S_BED) rect(0, 0, sw, sh, (SDL_Color){10, 16, 50, 40});
     draw_bubbles(s, t, tall, 0);
     if (sc->kind == S_OPENER) {
