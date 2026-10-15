@@ -6,8 +6,8 @@
     (public domain), given the same old-record sound as the rest of the music;
   - ducks: a pond of Pekin ducks and mallards quacking, and a mallard's
     "QUACK quack quack quack", cut into single quacks (CC BY-SA);
-  - the horn: a child's plastic bulb horn (CC0, AntumDeluge on OpenGameArt),
-    played slower and deeper, cut into single honks.
+  - the horn: the user's "Symphony of honks from Harpo's horn", cut into single
+    honks (before it, a child's plastic bulb horn, CC0, AntumDeluge on OpenGameArt).
 
     tools/make_sounds.py SOUNDS_DIR
 
@@ -22,6 +22,8 @@ OLD_RECORD = ("highpass=f=140,lowpass=f=4200,equalizer=f=1800:t=q:w=1:g=3,"
 DEEP = 0.55
 HONK = (f"highpass=f=100,asetrate={22050 * DEEP:.0f},aresample=22050,"
         "equalizer=f=300:t=q:w=1:g=5")
+# the user's own recording of Harpo-style honks, as it is
+HARPO = "highpass=f=90"
 # name: recording, start, end (seconds), and how it is evened out
 CUTS = {
     "s_pond": ("ducks-pekin-and-mallard.ogg", 64.0, 80.5, "highpass=f=250"),
@@ -31,9 +33,9 @@ CUTS = {
     "s_quack3": ("ducks-mallard-female.mp3", 7.63, 7.92, "highpass=f=200"),
     "s_quack4": ("ducks-pekin-and-mallard.ogg", 65.0, 65.42, "highpass=f=300"),
     "s_quack5": ("ducks-pekin-and-mallard.ogg", 79.15, 79.80, "highpass=f=300"),
-    "s_honk1": ("oga-bicycle-horn/bicycle-horn-1.wav", 0.01, 0.27, HONK),   # squeeze and let go
-    "s_honk2": ("oga-bicycle-horn/bicycle-horn-1.wav", 0.29, 0.57, HONK),
-    "s_honk3": ("oga-bicycle-horn/bicycle-horn-1.wav", 0.0, 0.60, HONK),    # a double honk
+    "s_honk1": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 0.30, 0.80, HARPO),
+    "s_honk2": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 0.81, 1.20, HARPO),
+    "s_honk3": ("Symphony_of_honks_from_Harpo_s_horn.mp3", 1.23, 1.68, HARPO),   # a double honk
 }
 
 def main(src):
