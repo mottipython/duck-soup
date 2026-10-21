@@ -215,9 +215,12 @@ def main(mirror):
                     "-resize", "2560x", "-quality", "88", f"{OUT}/bedroom.jpg"], check=True)
     print("bedroom.jpg")
     # the Mirror Scene, as it is
-    src = os.path.join(mirror, "assets/art")
-    for f in sorted(os.listdir(src)):
-        shutil.copyfile(os.path.join(src, f), f"{OUT}/mr_{f}")
+    mirror_path = os.path.realpath(mirror)
+    src = os.path.join(mirror_path, "assets/art")
+    if os.path.isdir(src):
+        for f in sorted(os.listdir(src)):
+            fname = os.path.basename(f)
+            shutil.copyfile(os.path.join(src, fname), os.path.join(OUT, f"mr_{fname}"))
     print(f"mr_*: {len(os.listdir(src))} pictures from {src}")
     write_list()
 
