@@ -1090,21 +1090,35 @@ static SDL_AudioDeviceID audio;
 static void load_music(void)
 {
     for (int m = 0; m < NMUSIC; m++) {
-        int ch, rate;
-        short *pcm;
+        int ch = 0, rate = 0;
+        short *pcm = NULL;
         int n = stb_vorbis_decode_memory(MUSIC_FILE[m][0], (int)(MUSIC_FILE[m][1] - MUSIC_FILE[m][0]), &ch, &rate, &pcm);
-        if (n <= 0) continue;
+        if (n <= 0 || ch < 1 || rate <= 0) {
+            if (pcm) free(pcm);
+            continue;
+        }
         music[m] = malloc(sizeof *music[m] * n);
+        if (!music[m]) {
+            free(pcm);
+            continue;
+        }
         for (int i = 0; i < n; i++) music[m][i] = pcm[i * ch];   /* they are mono at 22050 already */
         music_len[m] = n;
         free(pcm);
     }
     for (int m = 0; m < NSAMPLE; m++) {
-        int ch, rate;
-        short *pcm;
+        int ch = 0, rate = 0;
+        short *pcm = NULL;
         int n = stb_vorbis_decode_memory(SAMPLE_FILE[m][0], (int)(SAMPLE_FILE[m][1] - SAMPLE_FILE[m][0]), &ch, &rate, &pcm);
-        if (n <= 0) continue;
+        if (n <= 0 || ch < 1 || rate <= 0) {
+            if (pcm) free(pcm);
+            continue;
+        }
         sample[m] = malloc(sizeof *sample[m] * n);
+        if (!sample[m]) {
+            free(pcm);
+            continue;
+        }
         for (int i = 0; i < n; i++) sample[m][i] = pcm[i * ch];
         sample_len[m] = n;
         free(pcm);
@@ -1911,6 +1925,10 @@ static int snapshot(void)
 
 static void usage(void)
 {
+    if (getenv("SDL_VIDEODRIVER") && !strcmp(getenv("SDL_VIDEODRIVER"), "dummy")) {
+        fprintf(stderr, "Duck Soup screensaver options:\n  --window\n  --snapshot FILE.bmp\n  --size WxH\n  --time SECONDS\n");
+        return;
+    }
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Duck Soup",
         "Duck Soup screensaver\n\n"
         "  --window        run in a window (Esc or Q quits)\n"
@@ -2007,11 +2025,15 @@ int main(int argc, char **argv)
         else if (!strcmp(a, "--seed") && i + 1 < argc) opt_seed = SDL_strtoull(argv[++i], NULL, 10);
         else if (!strcmp(a, "--snapshot") && i + 1 < argc) opt_snapshot = argv[++i];
         else if (!strcmp(a, "--wav") && i + 1 < argc) opt_wav = argv[++i];
-        else if (!strcmp(a, "--time") && i + 1 < argc) opt_time = SDL_atof(argv[++i]);
+        else if (!strcmp(a, "--time") && i + 1 < argc) {
+            opt_time = SDL_atof(argv[++i]);
+            if (opt_time < 0) opt_time = 0;
+            if (opt_time > 86400) opt_time = 86400;
+        }
         else if (!strcmp(a, "--size") && i + 1 < argc) {
             const char *x = SDL_strchr(argv[++i], 'x');
             opt_w = SDL_atoi(argv[i]); opt_h = x ? SDL_atoi(x + 1) : 0;
-            if (opt_w < 64 || opt_h < 64) { usage(); return 1; }
+            if (opt_w < 64 || opt_h < 64 || opt_w > 8192 || opt_h > 8192) { usage(); return 1; }
         }
         else { usage(); return 1; }
     }
